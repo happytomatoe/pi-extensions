@@ -1,0 +1,62 @@
+{
+  "name": "pi-highlight-user-message",
+  "version": "0.1.0",
+  "description": "Extension to show a border around user messages in the Pi coding agent TUI.",
+  "type": "module",
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "files": [
+    "index.ts",
+    "src",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "npm run typecheck",
+    "test": "tsx --test tests/*.test.ts",
+    "check": "npm run lint && npm run test",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "keywords": [
+    "pi-package",
+    "pi",
+    "pi-extension",
+    "pi-coding-agent",
+    "pi-tui",
+    "highlight-user-message"
+  ],
+  "author": "MasuRii",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MasuRii/pi-highlight-user-message.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MasuRii/pi-highlight-user-message/issues"
+  },
+  "homepage": "https://github.com/MasuRii/pi-highlight-user-message#readme",
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.74.0 || ^0.75.0 || ^0.77.0 || ^0.78.0 || ^0.79.0",
+    "@earendil-works/pi-tui": "^0.74.0 || ^0.75.0 || ^0.77.0 || ^0.78.0 || ^0.79.0"
+  },
+  "overrides": {
+    "file-type": ">=21.3.1"
+  },
+  "devDependencies": {
+    "tsx": "4.22.4",
+    "typescript": "6.0.3"
+  }
+}
