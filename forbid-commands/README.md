@@ -1,40 +1,85 @@
 # forbid-commands
 
-A [Pi](https://github.com/happytomatoe/pi) extension that blocks destructive shell commands.
+A [Pi](https://github.com/happytomatoe/pi) extension that blocks, confirms, or allows shell commands via a YAML config.
+
+## Three Modes
+
+| Mode | Behavior |
+|------|----------|
+| **deny** | Hard block — never runs, no questions |
+| **confirm** | Asks user before running |
+| **allow** | Runs silently, skips DCG too |
 
 ## How it works
 
-Two layers of protection:
+1. Check **deny** rules → block immediately
+2. Check **allow** rules → run silently
+3. Check **confirm** rules → ask user
+4. Fallback to **DCG** (if installed and enabled)
+5. Default: allow
 
-1. **dcg** — delegates to [dcg](https://github.com/anthropics/dcg) (`dcg --robot test <command>`) for comprehensive destructive command detection (rm, git push, secrets, ssh, env, etc.)
-2. **Custom patterns** — regex checks for commands dcg doesn't cover:
-   - Process killing (`killall`, `kill <pid>`, `pkill`)
-   - Privilege escalation (`su`)
-   - System destruction (`shutdown`, `reboot`, `halt`, `poweroff`)
+Last matching rule wins (like shell PATH).
 
-Fails open if dcg is not installed — a missing dcg never wedges Pi.
+## Config File
 
-## Usage
+Place at one of:
+- **Global:** `~/.pi/agent/forbid-commands.yaml`
+- **Project:** `.pi/forbid-commands.yaml`
 
-Add to your Pi config:
+Project-local overrides global.
 
-```json
-{
-  "extensions": {
-    "forbid-commands": "npm:i:--registry npm:@earendil-works/forbid-commands"
-  }
-}
+### Example Config
+
+```yaml
+use_dcg: true
+
+# HARD BLOCK
+deny:
+  - pattern: "shutdown *"
+    message: "Shutdown is forbidden"
+  - pattern: "kill *"
+    message: "Killing processes is forbidden"
+
+# ASK USER
+confirm:
+  - pattern: "rm *"
+    message: "Allow rm?"
+  - pattern: "sudo *"
+    message: "Allow sudo?"
+  - pattern: "git push *"
+    message: "Allow git push?"
+
+# ALLOW SILENTLY
+allow:
+  - pattern: "ls *"
+  - pattern: "cat *"
+  - pattern: "git status"
+  - pattern: "git diff *"
+  - pattern: "mkdir *"
+  - pattern: "cp *"
+  - pattern: "mv *"
 ```
 
-Or locally:
+### Pattern Syntax
 
-```json
-{
-  "extensions": [
-    "+extensions/forbid-commands/forbid-commands.ts"
-  ]
-}
+- `*` matches anything (glob-style)
+- `rm *` matches `rm foo`, `rm -rf ./bar`, etc.
+- `git push *` matches `git push`, `git push origin main`
+- Exact match: `git status` (no wildcard)
+
+### Options
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `use_dcg` | `true` | Enable DCG as fallback for unmatched commands |
+
+## Install
+
+```bash
+pi install git:github.com/happytomatoe/pi-extensions
 ```
+
+Then run `pi config` to enable the extension.
 
 ## License
 
