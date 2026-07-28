@@ -173,7 +173,6 @@ function loadConfig(): Config {
   };
 
   const configPath = findConfig();
-  console.log("[forbid-commands] config path:", configPath);
   if (!configPath) return defaultConfig;
 
   try {
