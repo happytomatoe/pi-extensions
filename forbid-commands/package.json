@@ -1,0 +1,28 @@
+{
+  "name": "forbid-commands",
+  "version": "0.1.0",
+  "description": "Pi extension that blocks destructive commands using dcg + custom patterns.",
+  "type": "module",
+  "main": "./forbid-commands.ts",
+  "exports": {
+    ".": "./forbid-commands.ts"
+  },
+  "pi": {
+    "extensions": [
+      "./forbid-commands.ts"
+    ]
+  },
+  "keywords": [
+    "pi",
+    "pi-extension",
+    "pi-coding-agent",
+    "forbid-commands",
+    "destructive-commands",
+    "dcg"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.80.0"
+  }
+}
