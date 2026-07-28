@@ -32,11 +32,14 @@ interface Config {
 const CONFIG_FILENAMES = ["forbid-commands.yaml", "forbid-commands.yml"];
 
 function findConfig(): string | null {
+  const home = homedir();
   const candidates = [
     // Global
-    join(homedir(), ".pi", "agent", ...CONFIG_FILENAMES),
+    join(home, ".pi", "agent", "forbid-commands.yaml"),
+    join(home, ".pi", "agent", "forbid-commands.yml"),
     // Project-local
-    join(process.cwd(), ".pi", ...CONFIG_FILENAMES),
+    join(process.cwd(), ".pi", "forbid-commands.yaml"),
+    join(process.cwd(), ".pi", "forbid-commands.yml"),
   ];
   for (const c of candidates) {
     if (existsSync(c)) return c;
@@ -66,8 +69,8 @@ function parseSimpleYaml(raw: string): Record<string, unknown> {
     const line = rawLine.replace(/#.*$/, "").trimEnd(); // strip comments
     if (!line || /^\s*$/.test(line)) continue;
 
-    // Top-level key: value
-    const topScalar = line.match(/^(\w[\w]*):\s*"?(.+?)"?\s*$/);
+    // Top-level key: value or key: (list follows)
+    const topScalar = line.match(/^(\w[\w]*):\s*("?(.*?)"?\s*)?$/);
     if (topScalar && !line.match(/^\s+/)) {
       // save previous list object
       if (currentKey && currentList) {
@@ -80,7 +83,7 @@ function parseSimpleYaml(raw: string): Record<string, unknown> {
         currentObj = null;
       }
       const [, key, val] = topScalar;
-      if (val === "" || val === undefined) {
+      if (!val || val.trim() === "") {
         currentKey = key;
         currentList = [];
         continue;
@@ -170,6 +173,7 @@ function loadConfig(): Config {
   };
 
   const configPath = findConfig();
+  console.log("[forbid-commands] config path:", configPath);
   if (!configPath) return defaultConfig;
 
   try {
@@ -181,7 +185,8 @@ function loadConfig(): Config {
       confirm: Array.isArray(parsed.confirm) ? parsed.confirm : defaultConfig.confirm,
       allow: Array.isArray(parsed.allow) ? parsed.allow : defaultConfig.allow,
     };
-  } catch {
+  } catch (e) {
+    console.error("[forbid-commands] failed to load config:", e);
     return defaultConfig;
   }
 }
@@ -273,8 +278,7 @@ export default function (pi: ExtensionAPI) {
   pi.on("tool_call", async (event, ctx) => {
     if (!isToolCallEventType("bash", event)) return;
 
-    const command = event.input.command || "";
-
+    const command = event.input?.command || "";
     // 1. Check DENY rules — hard block, no questions
     const denied = matchRules(config.deny, command);
     if (denied) {
