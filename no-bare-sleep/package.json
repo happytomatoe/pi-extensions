@@ -1,0 +1,27 @@
+{
+  "name": "no-bare-sleep",
+  "version": "0.1.0",
+  "description": "Pi extension that blocks the agent from using bare sleep; prefer polling via wait_until.",
+  "type": "module",
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "keywords": [
+    "pi",
+    "pi-extension",
+    "pi-coding-agent",
+    "no-sleep",
+    "polling"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.80.0"
+  }
+}

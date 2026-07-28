@@ -1,0 +1,50 @@
+#!/bin/bash
+wait_until() {
+  local timeout=$1 interval=$2 desc=$3; shift 3
+  local elapsed=0
+  until "$@"; do
+    if (( elapsed >= timeout )); then
+      echo "Timed out after ${timeout}s waiting for: $desc" >&2
+      return 1
+    fi
+    sleep "$interval"
+    (( elapsed += interval ))
+  done
+}
+
+usage() {
+  cat <<'EOF'
+wait_until <timeout> <interval> <desc> <command...>
+
+Poll <command...> every <interval> seconds until it succeeds or <timeout>
+seconds elapse.
+
+  timeout   max seconds to wait (e.g. 60)
+  interval  seconds between polls (e.g. 2)
+  desc      human-readable description shown on timeout
+  command   command (and args) to run; success = exit 0
+
+Examples:
+  # Wait up to 60s, polling every 2s, for an HTTP health endpoint
+  wait_until 60 2 "server on :3000" curl -sf http://localhost:3000/health
+
+  # Wait up to 30s for a build artifact to exist
+  wait_until 30 1 "build output ready" test -f ./dist/app.js
+
+  # Wait up to 120s for a Docker container to become healthy
+  wait_until 120 5 "postgres healthy" \
+    docker inspect -f '{{.State.Health.Status}}' db | grep -qx healthy
+
+  # Wait up to 45s for a TCP port to be listening
+  wait_until 45 3 "port 5432 open" bash -c 'exec 3<>/dev/tcp/localhost/5432'
+
+On timeout it prints "Timed out after <timeout>s waiting for: <desc>" to
+stderr and exits 1.
+EOF
+}
+
+case "$1" in
+  -h|--help) usage; exit 0 ;;
+esac
+
+wait_until "$@"
