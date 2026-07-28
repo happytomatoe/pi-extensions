@@ -3,14 +3,15 @@
   "version": "0.1.0",
   "description": "Pi extension that blocks destructive commands using dcg + custom patterns.",
   "type": "module",
-  "main": "./forbid-commands.ts",
+"main": "./index.ts",
   "exports": {
-    ".": "./forbid-commands.ts"
+    ".": "./index.ts"
   },
   "pi": {
     "extensions": [
-      "./forbid-commands.ts"
+      "./index.ts"
     ]
+  }
   },
   "keywords": [
     "pi",

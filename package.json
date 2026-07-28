@@ -1,0 +1,20 @@
+{
+  "name": "pi-extensions",
+  "version": "0.1.0",
+  "description": "Collection of extensions for the Pi coding agent.",
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "no-bare-sleep/index.ts",
+      "forbid-commands/index.ts",
+      "pi-highlight-user-message/index.ts"
+    ]
+  },
+  "keywords": [
+    "pi",
+    "pi-extension",
+    "pi-coding-agent"
+  ],
+  "author": "",
+  "license": "MIT"
+}
