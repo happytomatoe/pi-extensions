@@ -96,24 +96,21 @@ function parseSimpleYaml(raw: string): Record<string, unknown> {
       continue;
     }
 
-    // List item: - something
-    const listItem = line.match(/^\s+-\s+"?(.+?)"?\s*$/);
-    if (listItem && currentKey) {
-      const val = listItem[1];
-      if (val.includes(":")) {
-        // Could be an object start — handled below
-      }
-      if (!currentList) currentList = [];
-      currentList.push(val as any);
-      continue;
-    }
-
-    // List item object: - pattern: "..."
+    // List item object: - pattern: "..."  (must be checked before the generic list item regex)
     const listObjStart = line.match(/^\s+-\s+pattern:\s*"?(.+?)"?\s*$/);
     if (listObjStart && currentKey) {
       if (!currentList) currentList = [];
       currentObj = { pattern: listObjStart[1] };
       currentList.push(currentObj);
+      continue;
+    }
+
+    // List item: - something
+    const listItem = line.match(/^\s+-\s+"?(.+?)"?\s*$/);
+    if (listItem && currentKey) {
+      const val = listItem[1];
+      if (!currentList) currentList = [];
+      currentList.push(val as any);
       continue;
     }
 
