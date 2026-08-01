@@ -1,0 +1,3 @@
+node_modules/
+grammars/tree-sitter-bash.wasm
+*.wasm
