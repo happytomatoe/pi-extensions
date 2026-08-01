@@ -33,7 +33,7 @@ export function evaluateCommand(
     if (!wrapperRule || wrapperRule.state === "allow") {
       return {
         command: command.text,
-        state: "ask",
+        state: "allow",
         rule: wrapperRule,
         context: command.context,
         wrapperKind: command.wrapperKind,
@@ -44,7 +44,7 @@ export function evaluateCommand(
   const matched = matchRulesLastWins(rules, command.text, cwd);
   return {
     command: command.text,
-    state: matched?.state ?? "ask",
+    state: matched?.state ?? "allow",
     rule: matched,
     context: command.context,
     wrapperKind: command.wrapperKind,
