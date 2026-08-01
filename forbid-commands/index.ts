@@ -29,8 +29,6 @@ interface Config {
 // Config loading
 // ---------------------------------------------------------------------------
 
-const CONFIG_FILENAMES = ["forbid-commands.yaml", "forbid-commands.yml"];
-
 function findConfig(): string | null {
   const home = homedir();
   const candidates = [
@@ -75,10 +73,6 @@ function parseSimpleYaml(raw: string): Record<string, unknown> {
       // save previous list object
       if (currentKey && currentList) {
         result[currentKey] = currentList;
-        currentList = null;
-      }
-      if (currentKey && currentObj) {
-        result[currentKey] = currentList ?? [currentObj];
         currentList = null;
         currentObj = null;
       }
@@ -143,6 +137,7 @@ function loadConfig(): Config {
       { pattern: "killall *pi*", message: "Killing pi processes is forbidden" },
       { pattern: "kill *", message: "Killing processes by PID is forbidden" },
       { pattern: "pkill *brave*", message: "Killing Brave processes is forbidden" },
+      { pattern: "*ssh*", message: "Use shell-use" },
     ],
     confirm: [
       { pattern: "rm *", message: "Allow rm?" },
@@ -191,9 +186,17 @@ function loadConfig(): Config {
 // Wildcard matching (fnmatch-style)
 // ---------------------------------------------------------------------------
 
-function wildcardMatch(pattern: string, text: string): boolean {
+function wildcardMatch(pattern: string, text: string, cwd?: string): boolean {
+  // Expand $CWD placeholder to actual working directory
+  let expandedPattern = pattern;
+  if (cwd && pattern.includes("$CWD")) {
+    // Escape the cwd for use in regex (before glob conversion)
+    const escapedCwd = cwd.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+    expandedPattern = pattern.replace(/\$CWD/g, escapedCwd);
+  }
+
   // Convert glob pattern to regex
-  const regexStr = "^" + pattern
+  const regexStr = "^" + expandedPattern
     .replace(/[.+^${}()|[\]\\]/g, "\\$&")  // escape regex special chars
     .replace(/\*/g, ".*")                     // * → .*
     .replace(/\?/g, ".")                      // ? → .
@@ -201,11 +204,11 @@ function wildcardMatch(pattern: string, text: string): boolean {
   return new RegExp(regexStr, "i").test(text);
 }
 
-function matchRules(rules: PatternRule[], command: string): PatternRule | null {
+function matchRules(rules: PatternRule[], command: string, cwd?: string): PatternRule | null {
   // Last match wins (like shell PATH)
   let matched: PatternRule | null = null;
   for (const rule of rules) {
-    if (wildcardMatch(rule.pattern, command)) {
+    if (wildcardMatch(rule.pattern, command, cwd)) {
       matched = rule;
     }
   }
@@ -262,7 +265,9 @@ function hasDcg(): boolean {
 // ---------------------------------------------------------------------------
 
 export default function (pi: ExtensionAPI) {
+  // console.log('[forbid-commands] Extension loaded!');
   let config = loadConfig();
+  // console.log('[forbid-commands] Deny rules:', config.deny.map(r => r.pattern));
   let dcgAvailable = config.use_dcg && hasDcg();
 
   // Reload config on session start
@@ -275,8 +280,9 @@ export default function (pi: ExtensionAPI) {
     if (!isToolCallEventType("bash", event)) return;
 
     const command = event.input?.command || "";
+    // console.log('[forbid-commands] Tool call:', command);
     // 1. Check DENY rules — hard block, no questions
-    const denied = matchRules(config.deny, command);
+    const denied = matchRules(config.deny, command, process.cwd());
     if (denied) {
       return {
         block: true,
@@ -285,13 +291,13 @@ export default function (pi: ExtensionAPI) {
     }
 
     // 2. Check ALLOW rules — skip confirmation and DCG
-    const allowed = matchRules(config.allow, command);
+    const allowed = matchRules(config.allow, command, process.cwd());
     if (allowed) {
       return undefined;
     }
 
     // 3. Check CONFIRM rules — ask user
-    const needsConfirm = matchRules(config.confirm, command);
+    const needsConfirm = matchRules(config.confirm, command, process.cwd());
     if (needsConfirm) {
       if (!ctx.hasUI) {
         // Non-interactive: block by default

@@ -27,6 +27,18 @@ deny:
     message: "Killing Brave processes is forbidden"
   - pattern: "su *"
     message: "Switching user is forbidden"
+  # SSH is forbidden — use shell-use skill for persistent/interactive connections
+  - pattern: "ssh *"
+    message: "SSH is blocked. Use the shell-use skill for terminal connections and interactive sessions."
+  - pattern: "ssh"
+    message: "SSH is blocked. Use the shell-use skill for terminal connections and interactive sessions."
+  - pattern: "scp *"
+    message: "SCP is blocked (uses SSH). Use shell-use skill for file transfers or sftp."
+  - pattern: "sftp *"
+    message: "SFTP is blocked (uses SSH). Use shell-use skill for interactive file transfers."
+  - pattern: "sftp"
+    message: "SFTP is blocked (uses SSH). Use shell-use skill for interactive file transfers."
+
 
 # ASK USER — show confirmation dialog before running
 confirm:
