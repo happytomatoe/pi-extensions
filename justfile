@@ -3,9 +3,8 @@
 # Interactive install/remove of extensions via `pi install`.
 #
 # Usage:
-#   just pick             — gum multi-select → pi install each
+#   just install           — gum multi-select → pi install each
 #   just list             — show available extensions
-#   just install <name>   — pi install a single extension
 #   just remove  <name>   — pi remove an extension
 #   just install-all      — install every extension
 #   just setup-allowlist  — configure DCG allowlist for project work
@@ -22,7 +21,7 @@ _extensions:
     done
 
 # Interactive multi-select picker (gum) → pi install each
-pick:
+install:
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -39,18 +38,10 @@ pick:
         exit 1
     fi
 
-    # build label list: "name — description"
-    labels=()
-    for name in "${exts[@]}"; do
-        desc=""
-        if [ -f "{{ REPO_DIR }}/$name/README.md" ]; then
-            desc=$(sed -n '3p' "{{ REPO_DIR }}/$name/README.md" | sed 's/^[# ]*//')
-        fi
-        labels+=("$name — $desc")
-    done
+    labels=("${exts[@]}")
 
     echo "Select extensions to install:"
-    chosen=$(printf '%s\n' "${labels[@]}" | gum choose --no-limit --header "Extensions" --selected "0" 2>/dev/null || true)
+    chosen=$(printf '%s\n' "${labels[@]}" | gum choose --no-limit --header "Extensions" --selected "0" || true)
 
     if [ -z "$chosen" ]; then
         echo "Nothing selected."
@@ -59,7 +50,7 @@ pick:
 
     installed=0
     while IFS= read -r line; do
-        name=$(echo "$line" | cut -d' —' -f1)
+        name="$line"
         [ -z "$name" ] && continue
         echo ""
         echo "▸ Installing $name ..."
@@ -94,18 +85,6 @@ list:
         fi; \
         printf "  %-30s %s\n" "$name" "$desc"; \
     done
-
-# Install a single extension via pi install
-install name:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    src="{{ REPO_DIR }}/{{ name }}"
-    if [ ! -d "$src" ] || [ ! -f "$src/package.json" ]; then
-        echo "Extension '{{ name }}' not found in {{ REPO_DIR }}" >&2
-        echo "Run 'just list' to see available extensions" >&2
-        exit 1
-    fi
-    pi install "$src"
 
 # Remove an extension via pi remove
 remove name:
