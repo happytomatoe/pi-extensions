@@ -68,24 +68,26 @@ allow:
 - Exact match: `git status` (no wildcard)
 ### Allowing `rm` in Project Directories
 
-If you need to allow `rm` in your own project directories without confirmation, add specific allow patterns:
+The extension now detects the shell's current directory via `$PWD`, allowing patterns like `$CWD` to work correctly:
 
 ```yaml
 allow:
-  # Allow rm in git project directories
-  - pattern: "rm /var/home/l/git/*"
-  - pattern: "rm -rf /var/home/l/git/*"
-  
-  # Or for specific projects
-  - pattern: "rm /path/to/my-project/*"
+  # Allow rm in current directory (uses shell cwd)
+  - pattern: "rm $CWD/*"
+  - pattern: "rm -rf $CWD/*"
 ```
 
-**Note:** The shell's current directory is NOT accessible from extensions. When you run `cd /other/dir` in the shell, extensions cannot detect this change. Use explicit paths instead.
+**How it works:**
+- The extension runs `echo $PWD` before evaluating commands
+- This gets the shell's current directory (after any `cd` commands)
+- `$CWD` in patterns is replaced with this directory
+- Works for both absolute and relative paths in the current directory
 
-**Alternative approaches:**
-1. Add specific directories to the allow list (recommended)
-2. Use `/tmp` for temporary file operations: `rm /tmp/*`
-3. Use relative paths with `./` if you have patterns for those
+**Example:** If you're in `/var/home/l/git/voice-to-text` and run:
+```bash
+rm /var/home/l/git/voice-to-text/.agents/skills/e2e-setup/SKILL.md
+```
+The pattern `rm $CWD/*` will match and allow it without confirmation.
 ### Options
 
 | Key | Default | Description |
