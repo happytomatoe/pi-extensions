@@ -74,7 +74,7 @@ export default function (pi: ExtensionAPI) {
     if (!isToolCallEventType("bash", event)) return;
 
     const command = event.input?.command || "";
-    const cwd = process.cwd();
+    const cwd = ctx.cwd ?? process.cwd();
 
     if (isParserReady()) {
       const tree = parseBash(command);
