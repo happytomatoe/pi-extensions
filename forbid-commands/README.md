@@ -66,22 +66,26 @@ allow:
 - `rm *` matches `rm foo`, `rm -rf ./bar`, etc.
 - `git push *` matches `git push`, `git push origin main`
 - Exact match: `git status` (no wildcard)
-### `$CWD` Variable
+### Allowing `rm` in Project Directories
 
-You can use `$CWD` in patterns to match against Pi's working directory:
+If you need to allow `rm` in your own project directories without confirmation, add specific allow patterns:
 
 ```yaml
 allow:
-  - pattern: "rm $CWD/*"  # Allow rm in Pi's working directory
+  # Allow rm in git project directories
+  - pattern: "rm /var/home/l/git/*"
+  - pattern: "rm -rf /var/home/l/git/*"
+  
+  # Or for specific projects
+  - pattern: "rm /path/to/my-project/*"
 ```
 
-**Important:** `$CWD` is replaced with the Node.js process working directory (where Pi was started), NOT the shell's current directory after `cd` commands. If you run `cd /other/dir` in the shell, `$CWD` still reflects Pi's initial working directory.
+**Note:** The shell's current directory is NOT accessible from extensions. When you run `cd /other/dir` in the shell, extensions cannot detect this change. Use explicit paths instead.
 
-**Workaround:** If you need to allow `rm` in different directories, consider:
-1. Using explicit paths: `rm /tmp/*`
-2. Adding specific directories to the allow list
-3. Using relative paths with `./`: `rm ./*` (requires matching pattern)
-
+**Alternative approaches:**
+1. Add specific directories to the allow list (recommended)
+2. Use `/tmp` for temporary file operations: `rm /tmp/*`
+3. Use relative paths with `./` if you have patterns for those
 ### Options
 
 | Key | Default | Description |
