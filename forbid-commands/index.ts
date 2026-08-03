@@ -56,31 +56,6 @@ function hasDcg(): boolean {
   }
 }
 // ---------------------------------------------------------------------------
-// Shell cwd detection
-// ---------------------------------------------------------------------------
-
-function getShellCwd(): Promise<string> {
-  return new Promise((resolve) => {
-    const child = spawn('bash', ['-c', 'echo $PWD'], {
-      stdio: ['ignore', 'pipe', 'ignore'],
-    });
-    
-    let stdout = '';
-    child.stdout.on('data', (chunk: Buffer) => {
-      stdout += chunk.toString();
-    });
-    
-    child.on('close', () => {
-      resolve(stdout.trim());
-    });
-    
-    child.on('error', () => {
-      resolve(process.cwd());
-    });
-  });
-}
-
-// ---------------------------------------------------------------------------
 // Extension entry point
 // ---------------------------------------------------------------------------
 
@@ -98,7 +73,7 @@ export default function (pi: ExtensionAPI) {
     if (!isToolCallEventType("bash", event)) return;
 
     const command = event.input?.command || "";
-    const cwd = await getShellCwd();
+    const cwd = process.cwd();
 
     if (isParserReady()) {
       const tree = parseBash(command);
