@@ -1,0 +1,130 @@
+# forbid-commands configuration
+# Place this file at:
+#   Global:   ~/.pi/agent/forbid-commands.yaml
+#   Project:  .pi/forbid-commands.yaml
+#
+# Three blocks: deny, confirm, allow
+# Last matching rule wins (like shell PATH)
+
+# Enable DCG as fallback for commands not matched by rules above
+use_dcg: true
+
+# HARD BLOCK — never allowed, no questions
+deny:
+  - pattern: "shutdown *"
+    message: "Shutdown is forbidden"
+  - pattern: "reboot"
+    message: "Reboot is forbidden"
+  - pattern: "halt"
+    message: "Halt is forbidden"
+  - pattern: "poweroff"
+    message: "Power off is forbidden"
+  - pattern: "killall *pi*"
+    message: "Killing pi processes is forbidden"
+  - pattern: "kill *"
+    message: "Killing processes by PID is forbidden"
+  - pattern: "pkill *brave*"
+    message: "Killing Brave processes is forbidden"
+  - pattern: "pkill brave"
+    message: "Killing Brave processes is forbidden"
+  - pattern: "su *"
+    message: "Switching user is forbidden"
+  - regex: "^\\s*gh\\s+pr\\s+merge\\s+"
+    message: "Merging pr is forbidden"
+  - regex: "api\\.github\\.com.*\\/pulls\\/.*\\/merge"
+    message: "REST API merge PR is forbidden"
+  - regex: "github\\.com.*\\bmergePullRequest\\b|\\bmergePullRequest\\b.*github\\.com"
+    message: "GitHub GraphQL merge PR is forbidden"
+    message: "GraphQL merge PR is forbidden"
+  - regex: "^\\s*git\\s+push\\s+--force\\s+origin\\s+main\\s*$"
+    message: "Force pushing to origin main is forbidden"
+  # SSH is forbidden — use shell-use skill for persistent/interactive connections
+  - pattern: "ssh *"
+    message: "SSH is blocked. Use the shell-use skill for terminal connections and interactive sessions."
+  - pattern: "ssh"
+    message: "SSH is blocked. Use the shell-use skill for terminal connections and interactive sessions."
+  - pattern: "scp *"
+    message: "SCP is blocked (uses SSH). Use shell-use skill for file transfers or sftp."
+  - pattern: "sftp *"
+    message: "SFTP is blocked (uses SSH). Use shell-use skill for interactive file transfers."
+  - pattern: "sftp"
+    message: "SFTP is blocked (uses SSH). Use shell-use skill for interactive file transfers."
+  - pattern: "sudo *"
+    message: "Sudo is forbidden. If you need to install dnf package use toolbox"
+  - pattern: "* cargo install *"
+    message: "Use cargo binstall. How to use - cargo binstall <package-name>"
+
+
+
+
+# ASK USER — show confirmation dialog before running
+confirm:
+  - pattern: "rm *"
+    message: "Allow rm?"
+  - pattern: "rm -rf *"
+    message: "Allow rm -rf?"
+  - pattern: "git push --force *"
+    message: "Allow force push?"
+  - pattern: "git reset --hard *"
+    message: "Allow hard reset?"
+
+# ALLOW — never ask, skip DCG too
+allow:
+  # Read-only
+  - pattern: "echo *"
+  - pattern: "ls *"
+  - pattern: "cat *"
+  - pattern: "head *"
+  - pattern: "tail *"
+  - pattern: "grep *"
+  - pattern: "find *"
+  - pattern: "wc *"
+  - pattern: "file *"
+  - pattern: "stat *"
+  - pattern: "du *"
+  - pattern: "df *"
+  # Read-only
+  - pattern: "ls *"
+  - pattern: "cat *"
+  - pattern: "head *"
+  - pattern: "tail *"
+  - pattern: "grep *"
+  - pattern: "find *"
+  - pattern: "wc *"
+  - pattern: "file *"
+  - pattern: "stat *"
+  - pattern: "du *"
+  - pattern: "df *"
+
+  # Allow rm in /tmp
+  - pattern: "rm /tmp/*"
+  - pattern: "rm -rf /tmp/*"
+  # Allow rm in initial Pi working directory (uses $CWD which = process.cwd())
+  # Note: $CWD does NOT track shell cd changes - only the initial Pi cwd
+  - pattern: "rm $CWD/*"
+  - pattern: "rm -rf $CWD/*"
+  # Allow rm -rf with relative paths containing at least one /
+  - pattern: "rm -rf */*"
+
+  # Git read-only
+  - pattern: "git status"
+  - pattern: "git log *"
+  - pattern: "git diff *"
+  - pattern: "git show *"
+  - pattern: "git branch *"
+  - pattern: "git remote *"
+  - pattern: "git stash list"
+  - pattern: "git tag *"
+
+  # File operations
+  - pattern: "mkdir *"
+  - pattern: "touch *"
+  - pattern: "cp *"
+  - pattern: "mv *"
+  - pattern: "ln *"
+
+  # Project-specific: allow editing in current dir
+  - pattern: "sed -i *"
+  - pattern: "tee *"
+  - pattern: "xargs *"
+
