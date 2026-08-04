@@ -34,35 +34,26 @@ export function checkCommand(command: string): CheckResult {
   // Get all text versions to try (original + normalized)
   const textsToTry = [command, normalized];
   
-  // Check deny patterns first (most restrictive)
+  // Combine all rules in order: deny, confirm, allow
+  // Last matching rule wins (like the extension)
+  const allRules: Array<{ state: "allow" | "ask" | "deny"; pattern?: string; regex?: string; message?: string }> = [
+    ...config.deny.map(r => ({ ...r, state: "deny" as const })),
+    ...config.confirm.map(r => ({ ...r, state: "ask" as const })),
+    ...config.allow.map(r => ({ ...r, state: "allow" as const })),
+  ];
+  
+  // Find the last matching rule across all text versions
+  let matchedRule: typeof allRules[number] | undefined;
+  
   for (const text of textsToTry) {
-    for (const rule of config.deny) {
+    for (const rule of allRules) {
       if (matchesRule(rule, text)) {
-        return { state: "deny", rule };
+        matchedRule = rule;
       }
     }
   }
   
-  // Check confirm/ask patterns
-  for (const text of textsToTry) {
-    for (const rule of config.confirm) {
-      if (matchesRule(rule, text)) {
-        return { state: "ask", rule };
-      }
-    }
-  }
-  
-  // Check allow patterns
-  for (const text of textsToTry) {
-    for (const rule of config.allow) {
-      if (matchesRule(rule, text)) {
-        return { state: "allow", rule };
-      }
-    }
-  }
-  
-  // Default: ask (if no pattern matched)
-  return { state: "ask" };
+  return matchedRule ? { state: matchedRule.state, rule: matchedRule } : { state: "ask" };
 }
 
 function matchesRule(rule: { pattern?: string; regex?: string }, text: string): boolean {

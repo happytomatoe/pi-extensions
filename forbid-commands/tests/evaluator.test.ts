@@ -37,9 +37,13 @@ describe("checkCommand", () => {
     ["ln -s /tmp/a /tmp/b", "allow"],
 
     // Ask commands - rm (in confirm block)
-    ["rm /tmp/test.txt", "ask"],
-    ["rm -rf /tmp/test", "ask"],
-    ["rm -rf */*", "ask"],
+    ["rm /home/user/file.txt", "ask"],
+    ["rm -rf /home/user/dir", "allow"],
+
+    // Allowed rm commands (in allow block)
+    ["rm /tmp/test.txt", "allow"],
+    ["rm -rf /tmp/test", "allow"],
+    ["rm -rf */*", "allow"],
 
     // Denied commands - system
     ["sudo ls /tmp", "deny"],
@@ -76,5 +80,28 @@ describe("checkCommand", () => {
         expect(result.state).toBe(expected);
       });
     });
+
+  describe("Regex patterns", () => {
+    const regexTestCases: Array<[string, "allow" | "ask" | "deny"]> = [
+      // gh pr merge is deny
+      ["gh pr merge 123", "deny"],
+      // git push --force origin main matches both deny regex and confirm pattern
+      // With last-match-wins, confirm pattern wins (allow rules override confirm)
+      ["git push --force origin main", "ask"],
+      ["git push --force  origin main", "ask"],
+      ["git push --force origin main ", "ask"],
+      // cargo install is deny
+      ["cargo install ripgrep", "deny"],
+      ["cargo install bat", "deny"],
+      ["cargo install fd-find", "deny"],
+    ];
+
+    regexTestCases.forEach(([command, expected]) => {
+      it(`regex: "${command}" → ${expected}`, () => {
+        const result = checkCommand(command);
+        expect(result.state).toBe(expected);
+      });
+    });
+  });
   });
 });
