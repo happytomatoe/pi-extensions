@@ -1,0 +1,47 @@
+# forbid-commands justfile
+
+# Check if a command is allowed, ask, or denied
+# Usage: just check "rm -rf /tmp/test"
+check command:
+    npx tsx src/cli.ts {{command}}
+
+# Check command from stdin
+# Usage: echo "rm -rf /tmp/test" | just check-stdin
+check-stdin:
+    npx tsx src/cli.ts
+
+# Run all tests with vitest
+test: test-evaluator test-normalize
+
+# Run tests in watch mode
+test-watch:
+    npm run test:watch
+
+# Run only evaluator tests
+test-evaluator:
+    npx vitest run tests/evaluator.test.ts
+
+# Run only normalization tests
+test-normalize:
+    npx vitest run tests/normalization.test.ts
+
+# Run E2E tests with Pi (sequential)
+test-e2e:
+    npx tsx tests/e2e-pi-test.ts
+
+# Show current config
+config:
+    @cat ~/.pi/agent/forbid-commands.yaml
+
+# Show this help
+help:
+    @echo "Available commands:"
+    @echo "  just check <command>    - Check if a command is allowed"
+    @echo "  just check-stdin        - Check command from stdin"
+    @echo "  just test               - Run all unit tests"
+    @echo "  just test-watch         - Run tests in watch mode"
+    @echo "  just test-evaluator     - Run evaluator tests only"
+    @echo "  just test-normalize     - Run normalization tests only"
+    @echo "  just test-e2e           - Run E2E tests with Pi"
+    @echo "  just config             - Show current config"
+    @echo "  just help               - Show this help"

@@ -7,6 +7,15 @@
   "exports": {
     ".": "./index.ts"
   },
+  "bin": {
+    "forbid-commands": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "npx tsc --outDir dist",
+    "check": "node dist/cli.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
   "pi": {
     "extensions": [
       "./index.ts"
@@ -27,5 +36,8 @@
   },
   "dependencies": {
     "web-tree-sitter": "^0.26.11"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.10"
   }
 }

@@ -1,3 +1,8 @@
 node_modules/
 grammars/tree-sitter-bash.wasm
 *.wasm
+dist/
+*.cast
+.pi/
+.pi-glla/
+thoughts/

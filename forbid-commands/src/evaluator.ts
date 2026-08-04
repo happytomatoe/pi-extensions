@@ -2,6 +2,7 @@ import type { BashCommand } from "./command-enumerator";
 import type { PatternRule, EvaluationResult, DecisionStrategy } from "./types";
 import { regexMatch } from "./regex-utils";
 import { wildcardMatch } from "./wildcard-utils";
+import { getMatchingTexts } from "./normalize";
 
 function matchesRule(rule: PatternRule, text: string, cwd?: string): boolean {
   if (rule.regex) {
@@ -29,7 +30,13 @@ export function evaluateCommand(
   cwd?: string
 ): EvaluationResult {
   if (command.wrapperKind) {
-    const wrapperRule = matchRulesLastWins(rules, command.text, cwd);
+    // Try matching against all text versions (original and normalized)
+    const textsToTry = getMatchingTexts(command.text);
+    let wrapperRule: PatternRule | undefined;
+    for (const text of textsToTry) {
+      wrapperRule = matchRulesLastWins(rules, text, cwd);
+      if (wrapperRule) break;
+    }
     if (!wrapperRule || wrapperRule.state === "allow") {
       return {
         command: command.text,
@@ -41,7 +48,16 @@ export function evaluateCommand(
     }
   }
 
-  const matched = matchRulesLastWins(rules, command.text, cwd);
+  // Get all text versions to try (stripped, normalized)
+  const textsToTry = getMatchingTexts(command.text);
+
+  // Try matching against all versions
+  let matched: PatternRule | undefined;
+  for (const text of textsToTry) {
+    matched = matchRulesLastWins(rules, text, cwd);
+    if (matched) break;
+  }
+
   return {
     command: command.text,
     state: matched?.state ?? "allow",

@@ -7,6 +7,7 @@ import { enumerateCommands } from "./src/command-enumerator";
 import { evaluateCommand, aggregateResults } from "./src/evaluator";
 import type { PatternRule, Config } from "./src/types";
 import { loadConfig as loadTypedConfig } from "./src/config";
+import { extractCommandFromTool, isCommandTool } from "./src/command-extractor";
 
 
 
@@ -70,9 +71,11 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.on("tool_call", async (event, ctx) => {
-    if (!isToolCallEventType("bash", event)) return;
+    // Support both bash and external tools (shell-use, herdr, tmux)
+    const toolName = event.toolName;
+    if (!isCommandTool(toolName)) return;
 
-    const command = event.input?.command || "";
+    const command = extractCommandFromTool(toolName, event.input) || "";
     const cwd = process.cwd();
 
     if (isParserReady()) {
