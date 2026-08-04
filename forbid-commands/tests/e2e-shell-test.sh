@@ -81,10 +81,10 @@ for i in "${!TESTS[@]}"; do
   
   if [ "$ACTUAL" = "$EXPECTED" ]; then
     echo "  Status: ✓ PASS" | tee -a "$LOG_FILE"
-    ((passed++))
+    passed=$((passed + 1))
   else
     echo "  Status: ✗ FAIL" | tee -a "$LOG_FILE"
-    ((failed++))
+    failed=$((failed + 1))
   fi
   
   # Small delay between tests
