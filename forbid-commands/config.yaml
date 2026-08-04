@@ -51,7 +51,7 @@ deny:
     message: "SFTP is blocked (uses SSH). Use shell-use skill for interactive file transfers."
   - pattern: "sudo *"
     message: "Sudo is forbidden. If you need to install dnf package use toolbox"
-  - pattern: "* cargo install *"
+  - pattern: "cargo install *"
     message: "Use cargo binstall. How to use - cargo binstall <package-name>"
 
 
