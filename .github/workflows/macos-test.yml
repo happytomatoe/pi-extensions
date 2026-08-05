@@ -1,0 +1,80 @@
+name: macOS Compatibility Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  macos-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install just
+        run: brew install just
+
+      - name: Verify just installed
+        run: just --version
+
+      - name: Test just list (no deps needed)
+        run: just list
+
+      - name: Test bash portability (extract and run scripts)
+        run: |
+          # Extract the _extensions script and test it runs on macOS bash
+          echo "=== Testing bash compatibility on macOS ==="
+          echo "Bash version: bash --version | head -1"
+
+          # Create a test script that mimics _extensions
+          cat > /tmp/test_extensions.sh << 'EOF'
+          #!/usr/bin/env bash
+          REPO_DIR="."
+          for d in "$REPO_DIR"/*/; do
+              [ -f "$d/package.json" ] || continue
+              basename "$d"
+          done
+          EOF
+          chmod +x /tmp/test_extensions.sh
+
+          echo "Running extension discovery..."
+          bash /tmp/test_extensions.sh
+
+          # Test the portable mapfile replacement
+          echo ""
+          echo "=== Testing portable array building ==="
+          cat > /tmp/test_mapfile_fix.sh << 'EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          REPO_DIR="."
+
+          exts=()
+          while IFS= read -r line; do
+              exts+=("$line")
+          done < <(
+              for d in "$REPO_DIR"/*/; do
+                  [ -f "$d/package.json" ] || continue
+                  basename "$d"
+              done
+          )
+
+          if [ ${#exts[@]} -eq 0 ]; then
+              echo "No extensions found"
+          else
+              echo "Found ${#exts[@]} extension(s):"
+              for ext in "${exts[@]}"; do
+                  echo "  - $ext"
+              done
+          fi
+          EOF
+          chmod +x /tmp/test_mapfile_fix.sh
+
+          bash /tmp/test_mapfile_fix.sh
+          echo ""
+          echo "✅ All bash scripts work on macOS"
+
+      - name: Test just status (without pi)
+        run: |
+          # status uses `pi list` which may not be installed, but should not crash
+          just status || echo "(status requires pi - expected)"

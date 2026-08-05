@@ -26,7 +26,10 @@ install:
     set -euo pipefail
 
     # build list of extension dirs
-    mapfile -t exts < <(
+    exts=()
+    while IFS= read -r line; do
+        exts+=("$line")
+    done < <(
         for d in {{ REPO_DIR }}/*/; do
             [ -f "$d/package.json" ] || continue
             basename "$d"
