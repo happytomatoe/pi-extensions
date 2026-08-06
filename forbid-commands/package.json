@@ -14,7 +14,8 @@
     "build": "npx tsc --outDir dist",
     "check": "node dist/cli.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "postinstall": "mkdir -p grammars && cp node_modules/tree-sitter-bash/tree-sitter-bash.wasm grammars/tree-sitter-bash.wasm"
   },
   "pi": {
     "extensions": [
@@ -35,6 +36,7 @@
     "@earendil-works/pi-coding-agent": "^0.80.0"
   },
   "dependencies": {
+    "tree-sitter-bash": "^0.25.1",
     "web-tree-sitter": "^0.26.11"
   },
   "devDependencies": {
