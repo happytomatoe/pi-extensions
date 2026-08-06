@@ -14,7 +14,8 @@
     "build": "npx tsc --outDir dist",
     "check": "node dist/cli.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "postinstall": "mkdir -p grammars && cp node_modules/tree-sitter-bash/tree-sitter-bash.wasm grammars/tree-sitter-bash.wasm"
   },
   "pi": {
     "extensions": [
