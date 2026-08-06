@@ -1,9 +1,8 @@
 import { Parser, Language } from "web-tree-sitter";
 import { readFileSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
 
 let parser: Parser | null = null;
 let initPromise: Promise<void> | null = null;
@@ -13,15 +12,20 @@ export async function initParser(): Promise<void> {
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
-    await Parser.init();
-    parser = new Parser();
+    try {
+      await Parser.init();
+      parser = new Parser();
 
-    const wasmPath = join(__dirname, "../grammars/tree-sitter-bash.wasm");
-    const wasm = readFileSync(wasmPath);
-    const Bash = await Language.load(wasm);
-    parser.setLanguage(Bash);
+      const wasmPath = require.resolve("tree-sitter-bash/tree-sitter-bash.wasm");
+      const wasm = readFileSync(wasmPath);
+      const Bash = await Language.load(wasm);
+      parser.setLanguage(Bash);
 
-    console.log("[forbid-commands] Tree-sitter parser initialized");
+      // Parser initialized silently
+    } catch (err) {
+      console.warn("[forbid-commands] Failed to initialize parser:", (err as Error).message);
+      parser = null;
+    }
   })();
 
   return initPromise;

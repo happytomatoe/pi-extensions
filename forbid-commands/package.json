@@ -35,9 +35,13 @@
     "@earendil-works/pi-coding-agent": "^0.80.0"
   },
   "dependencies": {
+    "tree-sitter-bash": "^0.25.1",
     "web-tree-sitter": "^0.26.11"
   },
   "devDependencies": {
     "vitest": "^4.1.10"
+  },
+  "optionalDependencies": {
+    "tree-sitter-bash": "^0.25.1"
   }
 }
