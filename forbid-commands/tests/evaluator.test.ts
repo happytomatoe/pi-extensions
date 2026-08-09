@@ -106,8 +106,6 @@ allow:
     ["stat /tmp/test", "allow"],
     ["du -sh /tmp", "allow"],
     ["df -h", "allow"],
-
-    // Allowed commands - git read-only
     ["git status", "allow"],
     ["git log --oneline", "allow"],
     ["git diff main", "allow"],
@@ -116,8 +114,6 @@ allow:
     ["git remote -v", "allow"],
     ["git stash list", "allow"],
     ["git tag", "allow"],
-
-    // Allowed commands - file operations
     ["mkdir /tmp/test", "allow"],
     ["touch /tmp/file.txt", "allow"],
     ["cp /tmp/a.txt /tmp/b.txt", "allow"],
@@ -126,9 +122,9 @@ allow:
 
     // Ask commands - rm (in confirm block)
     ["rm /home/user/file.txt", "ask"],
-    ["rm -rf /home/user/dir", "allow"],
 
     // Allowed rm commands (in allow block)
+    ["rm -rf /home/user/dir", "allow"],
     ["rm /tmp/test.txt", "allow"],
     ["rm -rf /tmp/test", "allow"],
     ["rm -rf */*", "allow"],
@@ -159,6 +155,15 @@ allow:
     ['"pkill" brave', "deny"],
     ["'shutdown' -h now", "deny"],
     ["'ssh' user@host", "deny"],
+
+    // Regex patterns
+    ["gh pr merge 123", "deny"],
+    ["git push --force origin main", "ask"],
+    ["git push --force  origin main", "ask"],
+    ["git push --force origin main ", "ask"],
+    ["cargo install ripgrep", "deny"],
+    ["cargo install bat", "deny"],
+    ["cargo install fd-find", "deny"],
   ];
 
   describe("table-driven tests", () => {
@@ -168,28 +173,5 @@ allow:
         expect(result.state).toBe(expected);
       });
     });
-
-  describe("Regex patterns", () => {
-    const regexTestCases: Array<[string, "allow" | "ask" | "deny"]> = [
-      // gh pr merge is deny
-      ["gh pr merge 123", "deny"],
-      // git push --force origin main matches both deny regex and confirm pattern
-      // With last-match-wins, confirm pattern wins (allow rules override confirm)
-      ["git push --force origin main", "ask"],
-      ["git push --force  origin main", "ask"],
-      ["git push --force origin main ", "ask"],
-      // cargo install is deny
-      ["cargo install ripgrep", "deny"],
-      ["cargo install bat", "deny"],
-      ["cargo install fd-find", "deny"],
-    ];
-
-    regexTestCases.forEach(([command, expected]) => {
-      it(`regex: "${command}" → ${expected}`, () => {
-        const result = checkCommand(command);
-        expect(result.state).toBe(expected);
-      });
-    });
-  });
   });
 });
