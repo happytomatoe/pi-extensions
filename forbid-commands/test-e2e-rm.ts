@@ -36,42 +36,41 @@ const TEST_CASES: TestCase[] = [
 
 const SCRIPT_DIR = dirname(new URL(import.meta.url).pathname);
 const TEST_DIR = join(SCRIPT_DIR, "test-e2e");
+const PI_CWD = "/tmp/test-e2e-pi-cwd";  // Run Pi outside project to avoid AGENTS.md
 const EXTENSION_PATH = join(SCRIPT_DIR, "index.ts");
 
 function setupTestFiles(): void {
   console.log("1. Setting up test directory structure...");
   
-  // Clean and create test directory
-  rmSync(TEST_DIR, { recursive: true, force: true });
-  mkdirSync(join(TEST_DIR, "data", "files"), { recursive: true });
-  mkdirSync(join(TEST_DIR, "test-folder"), { recursive: true });
+  // Clean and create PI_CWD (where Pi runs)
+  rmSync(PI_CWD, { recursive: true, force: true });
+  mkdirSync(join(PI_CWD, "data", "files"), { recursive: true });
+  mkdirSync(join(PI_CWD, "test-folder"), { recursive: true });
+  
+  // Also create /tmp test dirs
   mkdirSync("/tmp/test-e2e", { recursive: true });
   mkdirSync("/tmp/test-e2e-folder", { recursive: true });
   
-  // Create test files
-  writeFileSync(join(TEST_DIR, "target.txt"), "test");
-  writeFileSync(join(TEST_DIR, "data", "files", "test.txt"), "test");
-  writeFileSync(join(TEST_DIR, "relative-file.txt"), "test");
+  // Create test files in PI_CWD (where Pi will run)
+  writeFileSync(join(PI_CWD, "target.txt"), "test");
+  writeFileSync(join(PI_CWD, "data", "files", "test.txt"), "test");
+  writeFileSync(join(PI_CWD, "relative-file.txt"), "test");
   writeFileSync("/tmp/test-e2e/tmp-file.txt", "test");
-  writeFileSync(join(SCRIPT_DIR, "..", "parent-file.txt"), "test");
+  writeFileSync(join(PI_CWD, "..", "parent-file.txt"), "test");  // Create in parent of PI_CWD
   
   console.log("   Created test files and directories\n");
 }
 
 function generatePrompt(testCases: TestCase[]): string {
-  const fileList = testCases.map(([cmd]) => {
-    // Extract path from command
-    const match = cmd.match(/rm\s+(?:-[^\s]+\s+)?(.+)/);
-    return `- ${match?.[1] || cmd}`;
-  }).join("\n");
+  const commands = testCases.map(([cmd]) => cmd).join("\n");
   
   return `Remove these files and directories. Make ALL rm commands as separate parallel tool calls (not sequential):
 
-${fileList}
+${commands}
 
 Execute all ${testCases.length} rm commands simultaneously as parallel bash tool calls. Then report which ones were allowed and which were blocked.
 
-Finally, run this command and output the result: echo \\\"PI_SESSION_FILE=\\$PI_SESSION_FILE\\\"`;
+Finally, run this command and output the result: echo \"PI_SESSION_FILE=\$PI_SESSION_FILE\"`;
 }
 
 function runTest(testCases: TestCase[]): { output: string; results: Map<string, string> } {
@@ -80,11 +79,11 @@ function runTest(testCases: TestCase[]): { output: string; results: Map<string, 
   const prompt = generatePrompt(testCases);
   
   const output = execSync(
-    `pi -p -ne --approve -ns -e ${EXTENSION_PATH} --model openrouter/free "${prompt}"`,
+    `pi -p -ne -ns --approve -e ${EXTENSION_PATH} --model openrouter/free "${prompt}"`,
     {
-      cwd: TEST_DIR,
+      cwd: PI_CWD,
       encoding: "utf-8",
-      timeout: 120000,
+      timeout: 60000,
     }
   );
   
@@ -112,8 +111,8 @@ function checkFilesystemResults(testCases: TestCase[]): { passed: number; failed
     const match = cmd.match(/rm\s+(?:-[^\s]+\s+)?(.+)/);
     const path = match?.[1] || cmd;
     
-    // Resolve path relative to TEST_DIR
-    const fullPath = path.startsWith("/") ? path : join(TEST_DIR, path);
+    // Resolve path relative to PI_CWD (where files were created)
+    const fullPath = path.startsWith("/") ? path : join(PI_CWD, path);
     const exists = existsSync(fullPath);
     
     const shouldExist = expected === "deny";
@@ -154,10 +153,10 @@ function copySessionFile(output: string): void {
 
 function cleanup(): void {
   console.log("\n5. Cleaning up...\n");
-  rmSync(TEST_DIR, { recursive: true, force: true });
+  rmSync(PI_CWD, { recursive: true, force: true });
   rmSync("/tmp/test-e2e", { recursive: true, force: true });
   rmSync("/tmp/test-e2e-folder", { recursive: true, force: true });
-  rmSync(join(SCRIPT_DIR, "..", "parent-file.txt"), { force: true });
+  rmSync(join(PI_CWD, "..", "parent-file.txt"), { force: true });
 }
 
 function printTestCases(): void {
