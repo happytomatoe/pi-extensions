@@ -146,16 +146,6 @@ export function loadConfig(): Config {
       { pattern: "sftp *", state: "deny", message: "SFTP is blocked (uses SSH). Use shell-use skill for interactive file transfers." },
       { pattern: "sftp", state: "deny", message: "SFTP is blocked (uses SSH). Use shell-use skill for interactive file transfers." },
     ],
-    confirm: [
-      { pattern: "rm -rf *", state: "ask", message: "Allow rm -rf?" },
-      { pattern: "rm *", state: "ask", message: "Allow rm?" },
-      { pattern: "sudo *", state: "ask", message: "Allow sudo?" },
-      { pattern: "git push --force *", state: "ask", message: "Allow force push?" },
-      { pattern: "git push *", state: "ask", message: "Allow git push?" },
-      { pattern: "git reset --hard *", state: "ask", message: "Allow hard reset?" },
-      { pattern: "docker system prune *", state: "ask", message: "Allow docker prune?" },
-      { pattern: "kubectl delete *", state: "ask", message: "Allow kubectl delete?" },
-    ],
     allow: [
       { pattern: "ls *", state: "allow" },
       { pattern: "cat *", state: "allow" },
@@ -208,7 +198,6 @@ export function loadConfig(): Config {
       use_dcg: parsed.use_dcg !== undefined ? Boolean(parsed.use_dcg) : defaultConfig.use_dcg,
       decision_strategy: validStrategy ?? defaultConfig.decision_strategy,
       deny: Array.isArray(parsed.deny) ? normalizeRules(parsed.deny, "deny") : defaultConfig.deny,
-      confirm: Array.isArray(parsed.confirm) ? normalizeRules(parsed.confirm, "ask") : defaultConfig.confirm,
       allow: Array.isArray(parsed.allow) ? normalizeRules(parsed.allow, "allow") : defaultConfig.allow,
       block_pr_create_for_fork_upstream: parsed.block_pr_create_for_fork_upstream
         ? normalizeBlockPrCreateForForkUpstreamConfig(

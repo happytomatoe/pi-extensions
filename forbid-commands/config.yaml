@@ -53,20 +53,15 @@ deny:
     message: "Sudo is forbidden. If you need to install dnf package use toolbox"
   - pattern: "cargo install *"
     message: "Use cargo binstall. How to use - cargo binstall <package-name>"
-
-
-
-
-# ASK USER — show confirmation dialog before running
-confirm:
   - pattern: "rm *"
-    message: "Allow rm?"
-  - pattern: "rm -rf *"
-    message: "Allow rm -rf?"
+    message: "rm requires confirmation"
   - pattern: "git push --force *"
-    message: "Allow force push?"
+    message: "Force push requires confirmation"
+  - pattern: "git push --force *"
+    message: "Don't use push force. Instead of that let's use Git revert."
   - pattern: "git reset --hard *"
-    message: "Allow hard reset?"
+    message: "Use git revert if you need to rollback something"
+
 
 # ALLOW — never ask, skip DCG too
 allow:

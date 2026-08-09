@@ -8,10 +8,9 @@
  * 
  * Exit codes:
  *   0 = allow
- *   1 = ask (requires user confirmation)
  *   2 = deny (blocked)
  * 
- * Output: one word (allow/ask/deny)
+ * Output: one word (allow/deny)
  */
 
 import { loadConfig } from "./config";
@@ -19,7 +18,7 @@ import { wildcardMatch } from "./wildcard-utils";
 import { normalizeCommand } from "./normalize";
 
 export interface CheckResult {
-  state: "allow" | "ask" | "deny";
+  state: "allow" | "deny";
   rule?: {
     pattern?: string;
     regex?: string;
@@ -34,11 +33,10 @@ export function checkCommand(command: string): CheckResult {
   // Get all text versions to try (original + normalized)
   const textsToTry = [command, normalized];
   
-  // Combine all rules in order: deny, confirm, allow
+  // Combine all rules in order: deny, allow
   // Last matching rule wins (like the extension)
-  const allRules: Array<{ state: "allow" | "ask" | "deny"; pattern?: string; regex?: string; message?: string }> = [
+  const allRules: Array<{ state: "allow" | "deny"; pattern?: string; regex?: string; message?: string }> = [
     ...config.deny.map(r => ({ ...r, state: "deny" as const })),
-    ...config.confirm.map(r => ({ ...r, state: "ask" as const })),
     ...config.allow.map(r => ({ ...r, state: "allow" as const })),
   ];
   
@@ -53,7 +51,7 @@ export function checkCommand(command: string): CheckResult {
     }
   }
   
-  return matchedRule ? { state: matchedRule.state, rule: matchedRule } : { state: "ask" };
+  return matchedRule ? { state: matchedRule.state, rule: matchedRule } : { state: "allow" };
 }
 
 function matchesRule(rule: { pattern?: string; regex?: string }, text: string): boolean {
@@ -97,8 +95,6 @@ async function main() {
   switch (result.state) {
     case "allow":
       process.exit(0);
-    case "ask":
-      process.exit(1);
     case "deny":
       process.exit(2);
   }

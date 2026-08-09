@@ -11,19 +11,19 @@ describe("Complex command variations (CLI simple check)", () => {
   // - confirm rules come second
   // - allow rules come last
   // So if a command matches both deny and allow, allow wins.
-  const testCases: Array<[string, "allow" | "ask" | "deny"]> = [
+  const testCases: Array<[string, "allow" | "deny"]> = [
     // Pipe commands - CLI matches against full string
     // "echo *" matches, so allow wins
     ["echo test | sudo ls", "allow"],
     ["echo test | kill 1234", "allow"],
     
     // Command substitution - no pattern matches
-    ["$(sudo ls)", "ask"],  // No pattern matches, defaults to ask
-    ["`sudo ls`", "ask"],  // No pattern matches, defaults to ask
+    ["$(sudo ls)", "allow"],  // No pattern matches, defaults to allow
+    ["`sudo ls`", "allow"],  // No pattern matches, defaults to allow
     
     // Env vars - pattern "sudo *" doesn't match "SUDO_ASKPASS=x sudo ls"
-    ["SUDO_ASKPASS=x sudo ls", "ask"],  // No pattern matches, defaults to ask
-    ["EDITOR=vim sudo -e /tmp/test", "ask"],  // No pattern matches, defaults to ask
+    ["SUDO_ASKPASS=x sudo ls", "allow"],  // No pattern matches, defaults to allow
+    ["EDITOR=vim sudo -e /tmp/test", "allow"],  // No pattern matches, defaults to allow
     
     // Multiple commands - "rm /tmp/*" matches, so allow wins
     ["rm /tmp/a; sudo ls", "allow"],

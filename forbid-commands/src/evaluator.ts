@@ -72,7 +72,7 @@ export function aggregateResults(
   strategy: DecisionStrategy = "most-restrictive"
 ): EvaluationResult {
   if (results.length === 0) {
-    return { command: "", state: "ask" };
+    return { command: "", state: "allow" };
   }
 
   switch (strategy) {
@@ -90,9 +90,6 @@ export function aggregateResults(
 function pickMostRestrictive(results: EvaluationResult[]): EvaluationResult {
   const deny = results.find(r => r.state === "deny");
   if (deny) return deny;
-
-  const ask = results.find(r => r.state === "ask");
-  if (ask) return ask;
 
   return results[0];
 }

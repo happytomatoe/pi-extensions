@@ -45,12 +45,10 @@ deny:
     message: "Merging PRs is forbidden"
   - regex: "cargo\\s+install"
     message: "Installing cargo packages is forbidden"
-
-confirm:
   - pattern: "rm *"
-    message: "Allow rm?"
+    message: "rm requires confirmation"
   - pattern: "git push --force *"
-    message: "Force push?"
+    message: "Force push requires confirmation"
 
 allow:
   - pattern: "echo *"
@@ -92,7 +90,7 @@ allow:
   });
   // Table-driven tests: [command, expected_state]
   // Based on patterns defined in ~/.pi/agent/forbid-commands.yaml
-  const testCases: Array<[string, "allow" | "ask" | "deny"]> = [
+  const testCases: Array<[string, "allow" | "deny"]> = [
     // Allowed commands - read-only
     ["echo hello", "allow"],
     ["ls /tmp", "allow"],
@@ -121,7 +119,7 @@ allow:
     ["ln -s /tmp/a /tmp/b", "allow"],
 
     // Ask commands - rm (in confirm block)
-    ["rm /home/user/file.txt", "ask"],
+    ["rm /home/user/file.txt", "deny"],
 
     // Allowed rm commands (in allow block)
     ["rm -rf /home/user/dir", "allow"],
@@ -158,9 +156,9 @@ allow:
 
     // Regex patterns
     ["gh pr merge 123", "deny"],
-    ["git push --force origin main", "ask"],
-    ["git push --force  origin main", "ask"],
-    ["git push --force origin main ", "ask"],
+    ["git push --force origin main", "deny"],
+    ["git push --force  origin main", "deny"],
+    ["git push --force origin main ", "deny"],
     ["cargo install ripgrep", "deny"],
     ["cargo install bat", "deny"],
     ["cargo install fd-find", "deny"],
