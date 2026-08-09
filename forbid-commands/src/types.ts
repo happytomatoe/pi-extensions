@@ -8,12 +8,18 @@ export interface PatternRule {
   state: PermissionState;
 }
 
+export interface BlockPrCreateForForkUpstreamConfig {
+  enabled: boolean;
+  exempt_repos?: string[];
+}
+
 export interface Config {
   use_dcg?: boolean;
   decision_strategy?: DecisionStrategy;
   deny: PatternRule[];
   confirm: PatternRule[];
   allow: PatternRule[];
+  block_pr_create_for_fork_upstream?: BlockPrCreateForForkUpstreamConfig;
 }
 
 export interface EvaluationResult {

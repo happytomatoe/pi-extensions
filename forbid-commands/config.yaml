@@ -128,3 +128,9 @@ allow:
   - pattern: "tee *"
   - pattern: "xargs *"
 
+# Block PR creation to upstream when working with forks
+# Pi coding agent is forbidden from creating PRs to upstream repository
+block_pr_create_for_fork_upstream:
+  enabled: true
+  exempt_repos: []  # List of repos to exempt (owner/repo format)
+

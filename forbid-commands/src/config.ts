@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
-import type { PatternRule, PermissionState, DecisionStrategy, Config } from "./types";
+import type { PatternRule, PermissionState, DecisionStrategy, Config, BlockPrCreateForForkUpstreamConfig } from "./types";
 
 function unescapeYamlDoubleQuoted(s: string): string {
   return s.replace(/\\("|\\)/g, "$1");
@@ -114,6 +114,18 @@ function normalizeRules(items: unknown[], state: PermissionState): PatternRule[]
     return { state };
   });
 }
+function normalizeBlockPrCreateForForkUpstreamConfig(
+  raw: Record<string, unknown> | undefined
+): BlockPrCreateForForkUpstreamConfig | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+
+  return {
+    enabled: raw.enabled !== undefined ? Boolean(raw.enabled) : true,
+    exempt_repos: Array.isArray(raw.exempt_repos)
+      ? (raw.exempt_repos as string[])
+      : [],
+  };
+}
 
 export function loadConfig(): Config {
   const defaultConfig: Config = {
@@ -173,6 +185,10 @@ export function loadConfig(): Config {
       { pattern: "tee *", state: "allow" },
       { pattern: "xargs *", state: "allow" },
     ],
+    block_pr_create_for_fork_upstream: {
+      enabled: true,
+      exempt_repos: [],
+    },
   };
 
   const configPath = findConfig();
@@ -194,6 +210,11 @@ export function loadConfig(): Config {
       deny: Array.isArray(parsed.deny) ? normalizeRules(parsed.deny, "deny") : defaultConfig.deny,
       confirm: Array.isArray(parsed.confirm) ? normalizeRules(parsed.confirm, "ask") : defaultConfig.confirm,
       allow: Array.isArray(parsed.allow) ? normalizeRules(parsed.allow, "allow") : defaultConfig.allow,
+      block_pr_create_for_fork_upstream: parsed.block_pr_create_for_fork_upstream
+        ? normalizeBlockPrCreateForForkUpstreamConfig(
+            parsed.block_pr_create_for_fork_upstream as Record<string, unknown>
+          )
+        : defaultConfig.block_pr_create_for_fork_upstream,
     };
   } catch (e) {
     console.error("[forbid-commands] failed to load config:", e);

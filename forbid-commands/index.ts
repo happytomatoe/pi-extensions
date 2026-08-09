@@ -8,6 +8,9 @@ import { evaluateCommand, aggregateResults } from "./src/evaluator";
 import type { PatternRule, Config } from "./src/types";
 import { loadConfig as loadTypedConfig } from "./src/config";
 import { extractCommandFromTool, isCommandTool } from "./src/command-extractor";
+import { detectFork, clearForkCache } from "./src/fork-detector";
+import { analyzePrCommand, formatBlockMessage } from "./src/pr-upstream-blocker";
+import type { ForkInfo } from "./src/fork-detector";
 
 
 
@@ -63,11 +66,24 @@ function hasDcg(): boolean {
 export default function (pi: ExtensionAPI) {
   let typedConfig = loadTypedConfig();
   let dcgAvailable = typedConfig.use_dcg && hasDcg();
+  let forkInfo: ForkInfo | null = null;
 
   pi.on("session_start", async () => {
     await initParser();
     typedConfig = loadTypedConfig();
     dcgAvailable = typedConfig.use_dcg && hasDcg();
+
+    // Detect fork if enabled
+    if (typedConfig.block_pr_create_for_fork_upstream?.enabled) {
+      forkInfo = detectFork();
+      if (forkInfo.isFork) {
+        console.log(
+          `[forbid-commands] Fork detected: ${forkInfo.currentRepo} (parent: ${forkInfo.parentRepo})`
+        );
+      }
+    } else {
+      forkInfo = null;
+    }
   });
 
   pi.on("tool_call", async (event, ctx) => {
@@ -77,6 +93,21 @@ export default function (pi: ExtensionAPI) {
 
     const command = extractCommandFromTool(toolName, event.input) || "";
     const cwd = process.cwd();
+    // Check for fork-aware PR blocking BEFORE existing logic
+    if (typedConfig.block_pr_create_for_fork_upstream?.enabled && forkInfo?.isFork) {
+      // Check if this repo is exempt
+      const exemptRepos = typedConfig.block_pr_create_for_fork_upstream.exempt_repos || [];
+      if (!exemptRepos.includes(forkInfo.currentRepo || "")) {
+        const prAnalysis = analyzePrCommand(command, forkInfo);
+
+        if (prAnalysis.isPrCreate && prAnalysis.targetsUpstream) {
+          return {
+            block: true,
+            reason: formatBlockMessage(forkInfo),
+          };
+        }
+      }
+    }
 
     if (isParserReady()) {
       const tree = parseBash(command);
