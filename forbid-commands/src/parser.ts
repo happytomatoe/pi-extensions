@@ -33,17 +33,19 @@ export async function initParser(): Promise<void> {
   initPromise = (async () => {
     try {
       await Parser.init();
-      parser = new Parser();
+      const newParser = new Parser();
 
-    const wasmPath = resolveWasmPath();
+      const wasmPath = resolveWasmPath();
       const wasm = readFileSync(wasmPath);
       const Bash = await Language.load(wasm);
-      parser.setLanguage(Bash);
+      newParser.setLanguage(Bash);
 
-      // Parser initialized silently
+      // Only assign after successful initialization
+      parser = newParser;
     } catch (err) {
       console.warn("[forbid-commands] Failed to initialize parser:", (err as Error).message);
-      parser = null;
+      // Reset initPromise so subsequent calls can retry
+      initPromise = null;
     }
   })();
 

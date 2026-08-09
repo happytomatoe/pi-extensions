@@ -180,7 +180,7 @@ just check "echo hello"
 # Expected: deny
 just check "sudo ls /tmp"
 
-# Expected: ask
+# Expected: deny
 just check "rm /tmp/test.txt"
 ```
 

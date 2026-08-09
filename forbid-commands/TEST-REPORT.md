@@ -181,7 +181,7 @@ The following edge cases have not been tested:
 
 The config file is located at:
 - **Repository:** `config.yaml`
-- **Symlink:** `~/.pi/agent/forbid-commands.yaml` → `/var/home/l/git/pi-extensions/forbid-commands/config.yaml`
+- **Symlink:** `~/.pi/agent/forbid-commands.yaml` → `./config.yaml` (relative to repo root)
 
 ### Rule Order
 
