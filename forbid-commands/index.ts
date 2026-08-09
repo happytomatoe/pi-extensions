@@ -72,6 +72,10 @@ export default function (pi: ExtensionAPI) {
     await initParser();
     typedConfig = loadTypedConfig();
     dcgAvailable = typedConfig.use_dcg && hasDcg();
+    // Clear fork cache from previous session to prevent stale state
+    clearForkCache();
+
+    // Detect fork if enabled
 
     // Detect fork if enabled
     if (typedConfig.block_pr_create_for_fork_upstream?.enabled) {

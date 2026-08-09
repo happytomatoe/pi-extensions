@@ -24,20 +24,19 @@ export function detectFork(): ForkInfo {
     );
     const ghData = JSON.parse(ghResult);
 
-    if (ghData.isFork) {
-      cachedForkInfo = {
-        isFork: true,
-        parentRepo: ghData.parent?.nameWithOwner,
-        currentRepo: ghData.nameWithOwner,
-        hasUpstreamRemote: checkUpstreamRemote(),
-      };
-      return cachedForkInfo;
-    }
+    // Cache and return result from GitHub immediately
+    cachedForkInfo = {
+      isFork: ghData.isFork,
+      parentRepo: ghData.parent?.nameWithOwner,
+      currentRepo: ghData.nameWithOwner,
+      hasUpstreamRemote: checkUpstreamRemote(),
+    };
+    return cachedForkInfo;
   } catch {
-    // Fall through to git-based detection
+    // Fall through to git-based detection only when gh fails
   }
 
-  // Method 2: Check git remotes (fallback)
+  // Method 2: Check git remotes (fallback when gh unavailable)
   const hasUpstream = checkUpstreamRemote();
 
   cachedForkInfo = {

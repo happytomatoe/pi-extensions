@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { checkCommand } from "../src/cli";
-import { mkdirSync, writeFileSync, rmSync } from "fs";
+import { mkdirSync, writeFileSync, rmSync, mkdtempSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { execSync } from "child_process";
 
 describe("checkCommand", () => {
-  const testHome = join(tmpdir(), "forbid-commands-test-" + process.pid);
+  const testHome = mkdtempSync(join(tmpdir(), "forbid-commands-test-"));
   const configDir = join(testHome, ".pi", "agent");
   const configFile = join(configDir, "forbid-commands.yaml");
 

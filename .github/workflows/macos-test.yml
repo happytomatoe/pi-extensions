@@ -77,4 +77,13 @@ jobs:
       - name: Test just status (without pi)
         run: |
           # status uses `pi list` which may not be installed, but should not crash
-          just status || echo "(status requires pi - expected)"
+          # Check for specific exit code or output indicating missing pi
+          output=$(just status 2>&1) && exit_code=0 || exit_code=$?
+          if [ $exit_code -eq 0 ]; then
+            echo "✅ just status succeeded"
+          elif echo "$output" | grep -qi "command not found\|no such file\|not installed\|ENOENT"; then
+            echo "✅ just status failed as expected (pi not installed): $output"
+          else
+            echo "❌ just status failed unexpectedly (exit code $exit_code): $output"
+            exit 1
+          fi
