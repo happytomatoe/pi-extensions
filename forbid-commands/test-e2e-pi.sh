@@ -69,7 +69,7 @@ Files to remove:
 
 Execute all 7 rm commands simultaneously as parallel bash tool calls. Then report which ones were allowed and which were blocked.
 
-Finally, run this command and output the result: echo \"PI_SESSION_FILE=$PI_SESSION_FILE\"" 2>&1)
+Finally, run this command and output the result: echo \"PI_SESSION_FILE=\$PI_SESSION_FILE\"" 2>&1)
 
 echo "$OUTPUT"
 echo ""
