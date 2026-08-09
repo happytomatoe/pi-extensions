@@ -46,11 +46,15 @@ deny:
   - regex: "cargo\\s+install"
     message: "Installing cargo packages is forbidden"
   - pattern: "rm *"
-    message: "rm requires confirmation"
+    message: "rm is forbidden. Use 'rm ./file.txt' for current directory or 'rm /tmp/file.txt' for /tmp"
   - pattern: "git push --force *"
-    message: "Force push requires confirmation"
+    message: "Force push is forbidden"
+  - pattern: "git reset --hard *"
+    message: "Hard reset is forbidden"
 
 allow:
+  - pattern: "rm ./*"
+  - pattern: "rm /tmp/*"
   - pattern: "echo *"
   - pattern: "ls *"
   - pattern: "cat *"
@@ -120,12 +124,15 @@ allow:
 
     // Ask commands - rm (in confirm block)
     ["rm /home/user/file.txt", "deny"],
+    ["rm file.txt", "deny"],           // no path - use rm ./file.txt
+    ["rm subdir/file.txt", "deny"],    // no ./ - use rm ./subdir/file.txt
+    ["rm ../file.txt", "deny"],        // parent dir - use rm /absolute/path
 
     // Allowed rm commands (in allow block)
-    ["rm -rf /home/user/dir", "allow"],
+    ["rm ./file.txt", "allow"],        // matches rm ./*
+    ["rm ./subdir/file.txt", "allow"], // matches rm ./*
     ["rm /tmp/test.txt", "allow"],
     ["rm -rf /tmp/test", "allow"],
-    ["rm -rf */*", "allow"],
 
     // Denied commands - system
     ["sudo ls /tmp", "deny"],

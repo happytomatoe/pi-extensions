@@ -54,14 +54,14 @@ deny:
   - pattern: "cargo install *"
     message: "Use cargo binstall. How to use - cargo binstall <package-name>"
   - pattern: "rm *"
-    message: "rm is forbidden"
+    message: "rm is forbidden. Use 'rm ./file.txt' for current directory or 'rm /tmp/file.txt' for /tmp"
   - pattern: "git push --force *"
     message: "Force push is forbidden. Use git revert instead."
   - pattern: "git reset --hard *"
     message: "Hard reset is forbidden. Use git revert instead."
 
 
-# ALLOW — never ask, skip DCG too
+# ALLOW — skip DCG too
 allow:
   # Read-only
   - pattern: "echo *"
@@ -76,28 +76,13 @@ allow:
   - pattern: "stat *"
   - pattern: "du *"
   - pattern: "df *"
-  # Read-only
-  - pattern: "ls *"
-  - pattern: "cat *"
-  - pattern: "head *"
-  - pattern: "tail *"
-  - pattern: "grep *"
-  - pattern: "find *"
-  - pattern: "wc *"
-  - pattern: "file *"
-  - pattern: "stat *"
-  - pattern: "du *"
-  - pattern: "df *"
+
+  # Allow rm with ./ prefix (current directory)
+  - pattern: "rm ./*"
 
   # Allow rm in /tmp
   - pattern: "rm /tmp/*"
   - pattern: "rm -rf /tmp/*"
-  # Allow rm in initial Pi working directory (uses $CWD which = process.cwd())
-  # Note: $CWD does NOT track shell cd changes - only the initial Pi cwd
-  - pattern: "rm $CWD/*"
-  - pattern: "rm -rf $CWD/*"
-  # Allow rm -rf with relative paths containing at least one /
-  - pattern: "rm -rf */*"
 
   # Git read-only
   - pattern: "git status"
