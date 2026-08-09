@@ -8,9 +8,10 @@ TOOL="$1"
 COMMAND="$2"
 EXPECTED="$3"
 SESSION_NAME="forbid-e2e-embed"
-LOG_DIR="/var/home/l/git/pi-extensions/forbid-commands/test-logs"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+LOG_DIR="$REPO_ROOT/forbid-commands/test-logs"
 LOG_FILE="$LOG_DIR/embed-test-$(date +%Y%m%d-%H%M%S).log"
-EXTENSION_PATH="/var/home/l/git/pi-extensions/forbid-commands/index.ts"
+EXTENSION_PATH="$REPO_ROOT/forbid-commands/index.ts"
 
 mkdir -p "$LOG_DIR"
 

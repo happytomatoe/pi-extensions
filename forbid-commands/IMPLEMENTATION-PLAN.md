@@ -352,7 +352,7 @@ echo "=== Testing Complete ==="
 
 #### 2. Create unit tests
 
-**File**: `src/evaluator.test.ts` (new file)
+**File**: `tests/evaluator.test.ts` (new file)
 
 ```typescript
 import { describe, it, expect } from "vitest";

@@ -80,4 +80,4 @@ ENV PATH="/home/testuser/.local/bin:${PATH}"
 COPY --chown=testuser:testuser tests/e2e-pi-test.ts /home/testuser/test-project/
 
 # Default command: run E2E tests
-CMD ["npx", "tsx", "tests/e2e-pi-test.ts"]
+CMD ["npx", "tsx", "e2e-pi-test.ts"]

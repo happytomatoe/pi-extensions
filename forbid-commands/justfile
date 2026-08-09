@@ -3,7 +3,7 @@
 # Check if a command is allowed, ask, or denied
 # Usage: just check "rm -rf /tmp/test"
 check command:
-    npx tsx src/cli.ts {{command}}
+    npx tsx src/cli.ts {{quote(command)}}
 
 # Check command from stdin
 # Usage: echo "rm -rf /tmp/test" | just check-stdin
