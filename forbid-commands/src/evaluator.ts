@@ -18,10 +18,6 @@ function matchRulesLastWins(rules: PatternRule[], text: string, cwd?: string): P
   let matched: PatternRule | undefined;
   for (const rule of rules) {
     if (matchesRule(rule, text, cwd)) {
-      // Deny rules always take precedence
-      if (rule.state === "deny") {
-        return rule;
-      }
       matched = rule;
     }
   }
