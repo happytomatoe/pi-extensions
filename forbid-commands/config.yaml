@@ -3,8 +3,8 @@
 #   Global:   ~/.pi/agent/forbid-commands.yaml
 #   Project:  .pi/forbid-commands.yaml
 #
-# Three blocks: deny, confirm, allow
-# Last matching rule wins (like shell PATH)
+# Two blocks: deny, allow
+# Deny rules take precedence over allow rules
 
 # Enable DCG as fallback for commands not matched by rules above
 use_dcg: true
@@ -54,13 +54,11 @@ deny:
   - pattern: "cargo install *"
     message: "Use cargo binstall. How to use - cargo binstall <package-name>"
   - pattern: "rm *"
-    message: "rm requires confirmation"
+    message: "rm is forbidden"
   - pattern: "git push --force *"
-    message: "Force push requires confirmation"
-  - pattern: "git push --force *"
-    message: "Don't use push force. Instead of that let's use Git revert."
+    message: "Force push is forbidden. Use git revert instead."
   - pattern: "git reset --hard *"
-    message: "Use git revert if you need to rollback something"
+    message: "Hard reset is forbidden. Use git revert instead."
 
 
 # ALLOW — never ask, skip DCG too
