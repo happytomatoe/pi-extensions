@@ -85,9 +85,22 @@ shell-use get-recording pi-e2e-test > "$SCRIPT_DIR/pi-e2e-test.cast"
 # Close session
 shell-use close --session pi-e2e-test
 
+# Find and copy the latest Pi session JSONL for troubleshooting
+echo ""
+echo "5. Finding Pi session file for troubleshooting..."
+SESSION_DIR="$HOME/.pi/agent/sessions"
+LATEST_SESSION=$(find "$SESSION_DIR" -name "*.jsonl" -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+if [ -n "$LATEST_SESSION" ]; then
+    cp "$LATEST_SESSION" "$SCRIPT_DIR/pi-e2e-session.jsonl"
+    echo "   Session file copied to: pi-e2e-session.jsonl"
+    echo "   Original: $LATEST_SESSION"
+else
+    echo "   No session file found"
+fi
+
 # Check results
 echo ""
-echo "5. Checking results..."
+echo "6. Checking results..."
 echo ""
 
 # Check if files were deleted/kept as expected
@@ -126,17 +139,18 @@ echo "test" > "$TEST_DIR/data/files/test.txt"
 echo "test" > "$SCRIPT_DIR/../parent-file.txt"
 
 # Run tests
-if test_result "$TEST_DIR/target.txt" "delete" "rm ./target.txt"; then ((passed++)); else ((failed++)); fi
-((total++))
+# Run tests
+if test_result "$TEST_DIR/target.txt" "delete" "rm ./target.txt"; then passed=$((passed + 1)); else failed=$((failed + 1)); fi
+total=$((total + 1))
 
-if test_result "$TEST_DIR/data/files/test.txt" "delete" "rm ./data/files/test.txt"; then ((passed++)); else ((failed++)); fi
-((total++))
+if test_result "$TEST_DIR/data/files/test.txt" "delete" "rm ./data/files/test.txt"; then passed=$((passed + 1)); else failed=$((failed + 1)); fi
+total=$((total + 1))
 
-if test_result "/tmp/test-e2e/tmp-file.txt" "delete" "rm /tmp/test-e2e/tmp-file.txt"; then ((passed++)); else ((failed++)); fi
-((total++))
+if test_result "/tmp/test-e2e/tmp-file.txt" "delete" "rm /tmp/test-e2e/tmp-file.txt"; then passed=$((passed + 1)); else failed=$((failed + 1)); fi
+total=$((total + 1))
 
-if test_result "$SCRIPT_DIR/../parent-file.txt" "keep" "rm ../parent-file.txt"; then ((passed++)); else ((failed++)); fi
-((total++))
+if test_result "$SCRIPT_DIR/../parent-file.txt" "keep" "rm ../parent-file.txt"; then passed=$((passed + 1)); else failed=$((failed + 1)); fi
+total=$((total + 1))
 
 # Summary
 echo ""
@@ -154,6 +168,7 @@ rm -rf "$TEST_DIR" /tmp/test-e2e /tmp/test-e2e-dir "$SCRIPT_DIR/../parent-file.t
 
 echo ""
 echo "Recording saved to: pi-e2e-test.cast"
+echo "Session file: pi-e2e-session.jsonl"
 echo "To play: asciinema play pi-e2e-test.cast"
 echo ""
 
