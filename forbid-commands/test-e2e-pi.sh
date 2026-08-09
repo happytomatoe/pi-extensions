@@ -69,8 +69,7 @@ Files to remove:
 
 Execute all 7 rm commands simultaneously as parallel bash tool calls. Then report which ones were allowed and which were blocked.
 
-At the very end, output this line exactly (replacing the path with the actual value of PI_SESSION_FILE):
-SESSION_FILE=<value of PI_SESSION_FILE environment variable>" 2>&1)
+Finally, run this command and output the result: echo \"PI_SESSION_FILE=$PI_SESSION_FILE\"" 2>&1)
 
 echo "$OUTPUT"
 echo ""
@@ -84,7 +83,7 @@ echo ""
 echo "6. Copying Pi session file..."
 
 # Extract session file path from LLM output
-SESSION_FILE_PATH=$(echo "$OUTPUT" | grep -oP 'SESSION_FILE=\K[^\s]+' | head -1)
+SESSION_FILE_PATH=$(echo "$OUTPUT" | grep -oP 'PI_SESSION_FILE=\K[^\s]+' | head -1)
 
 if [ -n "$SESSION_FILE_PATH" ] && [ -f "$SESSION_FILE_PATH" ]; then
     cp "$SESSION_FILE_PATH" "$SCRIPT_DIR/pi-e2e-session.jsonl"
