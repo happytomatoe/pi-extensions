@@ -82,11 +82,6 @@ allow:
   - pattern: "rm -r ./*"
   - pattern: "rm -f ./*"
   - pattern: "rm -rf ./*"
-  # Explicitly deny path traversal patterns
-  - pattern: "rm ../*"
-  - pattern: "rm -r ../*"
-  - pattern: "rm -f ../*"
-  - pattern: "rm -rf ../*"
 
   # Allow rm in /tmp
   - pattern: "rm /tmp/*"
