@@ -18,7 +18,9 @@ const ABBR_LINE_RE = /^abbr -a -- (\S+)\s+(.+)$/;
 function makeAbbrPattern(abbr: string): RegExp {
   // Escape special regex characters in the abbreviation
   const escaped = abbr.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(?:^|\\s)(${escaped})(?=\\s|$|[;|&])`, "g");
+  // Use word boundaries to prevent substring matches
+  // (?<![\w]) = not preceded by word char, (?!\w) = not followed by word char
+  return new RegExp(`(?<![\\w])(${escaped})(?![\\w])`, "g");
 }
 
 export default function (pi: ExtensionAPI) {
@@ -67,10 +69,29 @@ export default function (pi: ExtensionAPI) {
 
     for (const abbr of sorted) {
       const pattern = makeAbbrPattern(abbr);
-      result = result.replace(pattern, (match, captured, offset) => {
-        const prefix = match.slice(0, match.indexOf(captured));
-        return `${prefix}${abbreviations[abbr]}`;
-      });
+      // Use manual matching to handle overlapping replacements correctly
+      let lastIndex = 0;
+      let newResult = "";
+      let match;
+      
+      // Reset regex state
+      pattern.lastIndex = 0;
+      
+      while ((match = pattern.exec(result)) !== null) {
+        // Add text before match
+        newResult += result.slice(lastIndex, match.index);
+        // Add expansion
+        newResult += abbreviations[abbr];
+        lastIndex = match.index + match[0].length;
+        
+        // Prevent infinite loops on zero-length matches
+        if (match[0].length === 0) {
+          pattern.lastIndex++;
+        }
+      }
+      // Add remaining text
+      newResult += result.slice(lastIndex);
+      result = newResult;
     }
 
     return result;
@@ -99,8 +120,16 @@ export default function (pi: ExtensionAPI) {
       return { action: "continue" };
     }
 
-    // Skip whole-line bash commands (! prefix)
-    if (event.text.trimStart().startsWith("!")) {
+    // Skip whole-line bash commands (! prefix or pipe/redirection patterns)
+    const trimmedText = event.text.trimStart();
+    if (
+      trimmedText.startsWith("!") ||
+      trimmedText.includes("&&") ||
+      trimmedText.includes("||") ||
+      trimmedText.includes("|") ||
+      trimmedText.includes(">") ||
+      trimmedText.includes("<")
+    ) {
       return { action: "continue" };
     }
 

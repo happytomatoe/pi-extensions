@@ -16,6 +16,7 @@
 import { loadConfig } from "./config";
 import { wildcardMatch } from "./wildcard-utils";
 import { normalizeCommand } from "./normalize";
+import { pathToFileURL } from "node:url";
 
 export interface CheckResult {
   state: "allow" | "deny";
@@ -100,7 +101,7 @@ async function main() {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((err) => {
     console.error(err);
     process.exit(1);

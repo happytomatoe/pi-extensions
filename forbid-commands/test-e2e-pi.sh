@@ -15,25 +15,35 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "=== E2E Test with Pi and forbid-commands extension ==="
 echo ""
 
-# Setup test directory structure
-echo "1. Setting up test directory structure..."
-TEST_DIR="$SCRIPT_DIR/test-e2e"
-rm -rf "$TEST_DIR"
+# Setup test directory structure with unique temp dirs
+SETUP_MARKER=""
+setup_cleanup() {
+    if [ -n "$SETUP_MARKER" ]; then
+        rm -rf "$SETUP_MARKER"
+    fi
+}
+trap setup_cleanup EXIT
+
+SETUP_MARKER=$(mktemp -d)
+TEST_DIR="$SETUP_MARKER/test-e2e"
 mkdir -p "$TEST_DIR/data/files" "$TEST_DIR/test-folder"
 echo "test" > "$TEST_DIR/target.txt"
 echo "test" > "$TEST_DIR/data/files/test.txt"
 echo "test" > "$TEST_DIR/relative-file.txt"
-mkdir -p /tmp/test-e2e /tmp/test-e2e-folder
-echo "test" > /tmp/test-e2e/tmp-file.txt
-echo "test" > "$SCRIPT_DIR/../parent-file.txt"
+TMP_TEST=$(mktemp -d)
+echo "test" > "$TMP_TEST/tmp-file.txt"
+echo "test" > "$SETUP_MARKER/parent-file.txt"
+
+# Export paths for test functions
+export TEST_DIR TMP_TEST SETUP_MARKER
+
 echo "   Created:"
 echo "   - $TEST_DIR/target.txt (file)"
 echo "   - $TEST_DIR/data/files/test.txt (file)"
 echo "   - $TEST_DIR/relative-file.txt (file - for denied test)"
 echo "   - $TEST_DIR/test-folder/ (folder)"
-echo "   - /tmp/test-e2e/tmp-file.txt (file)"
-echo "   - /tmp/test-e2e-folder/ (folder)"
-echo "   - $SCRIPT_DIR/../parent-file.txt (file)"
+echo "   - $TMP_TEST/tmp-file.txt (file)"
+echo "   - $SETUP_MARKER/parent-file.txt (file)"
 echo ""
 
 # Test cases
@@ -169,7 +179,7 @@ echo ""
 
 # Cleanup
 echo "Cleaning up..."
-rm -rf "$TEST_DIR" /tmp/test-e2e /tmp/test-e2e-folder "$SCRIPT_DIR/../parent-file.txt"
+rm -rf "$SETUP_MARKER" 2>/dev/null || true
 
 echo ""
 

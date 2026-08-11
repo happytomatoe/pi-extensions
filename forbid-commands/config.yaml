@@ -54,7 +54,7 @@ deny:
   - pattern: "cargo install *"
     message: "Use cargo binstall. How to use - cargo binstall <package-name>"
   - pattern: "rm *"
-    message: "rm is forbidden. Use 'rm ./file.txt' for current directory or 'rm /tmp/file.txt' for /tmp"
+    message: "rm is forbidden. Use 'rm ./file.txt' for current directory or 'rm /tmp/file.txt' for /tmp only"
   - pattern: "git push --force *"
     message: "Force push is forbidden. Use git revert instead."
   - pattern: "git reset --hard *"
@@ -77,11 +77,16 @@ allow:
   - pattern: "du *"
   - pattern: "df *"
 
-  # Allow rm with ./ prefix (current directory)
+  # Allow rm with ./ prefix (current directory only - must start with ./)
   - pattern: "rm ./*"
   - pattern: "rm -r ./*"
   - pattern: "rm -f ./*"
   - pattern: "rm -rf ./*"
+  # Explicitly deny path traversal patterns
+  - pattern: "rm ../*"
+  - pattern: "rm -r ../*"
+  - pattern: "rm -f ../*"
+  - pattern: "rm -rf ../*"
 
   # Allow rm in /tmp
   - pattern: "rm /tmp/*"

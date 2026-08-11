@@ -2,7 +2,7 @@
 
 ## Goal
 
-Each extension should load in **<200ms** (module import + factory).
+Each extension should load in **<200ms** (module import time only).
 
 ## Measuring Startup Time
 
@@ -28,8 +28,7 @@ Output shows:
 |-------|---------|--------|
 | **Multiple files** | pi-goal-list-loop-audit (16 files) | 306ms |
 | **Many JS modules** | pi-dynamic-workflows (90+ files) | 804ms |
-| **jiti transpilation** | Any unbundled TypeScript | 50-200ms overhead |
-| **Large dependency trees** | Extensions importing heavy packages | Variable |
+| **jiti transpilation** | Any unbundled TypeScript | 50-200ms overhead (cold start) |
 
 ---
 
@@ -113,6 +112,8 @@ From handoff documents:
 - **Jiti baseline** (extensions loaded at runtime): ~4.0s
 - **Bundled binary** (6 extensions embedded): ~1.86s
 - **~2x faster** startup
+
+> **Note**: These measurements are anecdotal and may vary based on system load, Pi version, and extension set. For reproducible results, measure with `PI_TIMING=1 pi` and report the exact versions used.
 
 ### Key Files
 
@@ -201,7 +202,7 @@ This ensures dependencies are available without runtime resolution.
 
 ## References
 
-- [Pi Extensions Documentation](https://github.com/badlogic/pi-mono/blob/main/docs/extensions.md)
+- [Pi Extensions Documentation](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/extensions.md)
 - Handoff: `bundle-pi-extensions-staging-area.md` - Binary bundling implementation
 - Handoff: `fit-bundle-bundling-extensions.md` - Staging area approach
 - pi-readseek `package.json` - Example of bundled extension

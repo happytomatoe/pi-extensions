@@ -290,7 +290,8 @@ shell-use wait text "Loaded" --timeout 10000
 # Type an abbreviation and verify expansion
 shell-use type "testabb world"
 shell-use wait idle
-shell-use expect text "hello world"
+# testabb expands to "hello world", so result is "hello world world"
+shell-use expect text "hello world world"
 shell-use close
 ```
 
@@ -304,9 +305,10 @@ shell-use wait text "Loaded" --timeout 10000
 # Type text that is NOT an abbreviation
 shell-use type "notanabbreviation"
 shell-use wait idle
+# Should pass through unchanged (not an abbreviation)
 shell-use expect text "notanabbreviation"
-# Should NOT show expanded form
-shell-use expect text "notanabbreviation" --not
+# Should NOT show expansion notification
+shell-use expect text "Expanded" --not
 shell-use close
 ```
 

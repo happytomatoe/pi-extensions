@@ -36,8 +36,9 @@ const TEST_CASES: TestCase[] = [
 
 const SCRIPT_DIR = dirname(new URL(import.meta.url).pathname);
 const TEST_DIR = join(SCRIPT_DIR, "test-e2e");
-const PI_CWD = "/tmp/test-e2e-pi-cwd";  // Run Pi outside project to avoid AGENTS.md
+const PI_CWD = join(SCRIPT_DIR, "test-e2e-pi-cwd");  // Run Pi outside project to avoid AGENTS.md
 const EXTENSION_PATH = join(SCRIPT_DIR, "index.ts");
+const TMP_DIR = join(SCRIPT_DIR, "test-e2e-tmp");  // Unique tmp dir for tests
 
 function setupTestFiles(): void {
   console.log("1. Setting up test directory structure...");
@@ -47,15 +48,15 @@ function setupTestFiles(): void {
   mkdirSync(join(PI_CWD, "data", "files"), { recursive: true });
   mkdirSync(join(PI_CWD, "test-folder"), { recursive: true });
   
-  // Also create /tmp test dirs
-  mkdirSync("/tmp/test-e2e", { recursive: true });
-  mkdirSync("/tmp/test-e2e-folder", { recursive: true });
+  // Also create test dirs in TMP_DIR (instead of /tmp)
+  mkdirSync(join(TMP_DIR, "test-e2e"), { recursive: true });
+  mkdirSync(join(TMP_DIR, "test-e2e-folder"), { recursive: true });
   
   // Create test files in PI_CWD (where Pi will run)
   writeFileSync(join(PI_CWD, "target.txt"), "test");
   writeFileSync(join(PI_CWD, "data", "files", "test.txt"), "test");
   writeFileSync(join(PI_CWD, "relative-file.txt"), "test");
-  writeFileSync("/tmp/test-e2e/tmp-file.txt", "test");
+  writeFileSync(join(TMP_DIR, "test-e2e", "tmp-file.txt"), "test");
   writeFileSync(join(PI_CWD, "..", "parent-file.txt"), "test");  // Create in parent of PI_CWD
   
   console.log("   Created test files and directories\n");
@@ -154,8 +155,7 @@ function copySessionFile(output: string): void {
 function cleanup(): void {
   console.log("\n5. Cleaning up...\n");
   rmSync(PI_CWD, { recursive: true, force: true });
-  rmSync("/tmp/test-e2e", { recursive: true, force: true });
-  rmSync("/tmp/test-e2e-folder", { recursive: true, force: true });
+  rmSync(TMP_DIR, { recursive: true, force: true });
   rmSync(join(PI_CWD, "..", "parent-file.txt"), { force: true });
 }
 

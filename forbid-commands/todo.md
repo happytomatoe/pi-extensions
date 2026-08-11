@@ -26,8 +26,11 @@ Add patterns to allow common current-directory removal operations:
 - `rm subdir/` - remove directory in current dir
 - `rm -rf subdir/` - recursive remove in current dir
 
-**Potential patterns to add to allow block:**
-- `rm */*` - matches paths with /
-- `rm *.*` - matches files with extensions
+**⚠️ WARNING:** Do NOT add broad patterns like `rm */*` or `rm *.*` to the allow block. These patterns:
+- Can match path traversal attempts (e.g., `rm ../file.txt`)
+- Override deny rules due to last-match-wins behavior
+- Create security vulnerabilities
 
-**Note:** Need to verify wildcard matching behavior before implementing.
+**Safe approach:** Use explicit `./` prefix patterns like `rm ./*` which are already implemented.
+
+**Note:** The current implementation already handles this correctly with `rm ./*` patterns.

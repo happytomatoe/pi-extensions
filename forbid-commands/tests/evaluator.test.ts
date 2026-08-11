@@ -80,7 +80,7 @@ allow:
   - pattern: "cp *"
   - pattern: "mv *"
   - pattern: "ln *"
-  - pattern: "rm -rf */*"
+  # Allow rm in /tmp only
   - pattern: "rm /tmp/*"
   - pattern: "rm -rf /tmp/*"
 `);
