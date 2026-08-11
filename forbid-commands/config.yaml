@@ -79,9 +79,14 @@ allow:
 
   # Allow rm with ./ prefix (current directory)
   - pattern: "rm ./*"
+  - pattern: "rm -r ./*"
+  - pattern: "rm -f ./*"
+  - pattern: "rm -rf ./*"
 
   # Allow rm in /tmp
   - pattern: "rm /tmp/*"
+  - pattern: "rm -r /tmp/*"
+  - pattern: "rm -f /tmp/*"
   - pattern: "rm -rf /tmp/*"
 
   # Git read-only
