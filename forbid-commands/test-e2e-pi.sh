@@ -66,7 +66,7 @@ echo ""
 
 cd "$TEST_DIR"
 
-OUTPUT=$(pi -p -ne --approve -ns -e ../index.ts --model openrouter/free "Remove these files and directories. Make ALL rm commands as separate parallel tool calls (not sequential):
+OUTPUT=$(pi -p -ne --approve -ns -e "$SCRIPT_DIR/index.ts" --model openrouter/free "Remove these files and directories. Make ALL rm commands as separate parallel tool calls (not sequential):
 
 Files to remove:
 - ./target.txt
@@ -155,7 +155,7 @@ total=$((total + 1))
 if test_result "/tmp/test-e2e/tmp-file.txt" "delete" "rm /tmp/test-e2e/tmp-file.txt" false; then passed=$((passed + 1)); else failed=$((failed + 1)); fi
 total=$((total + 1))
 
-if test_result "$SCRIPT_DIR/../parent-file.txt" "keep" "rm ../parent-file.txt" false; then passed=$((passed + 1)); else failed=$((failed + 1)); fi
+if test_result "$SETUP_MARKER/parent-file.txt" "keep" "rm ../parent-file.txt" false; then passed=$((passed + 1)); else failed=$((failed + 1)); fi
 total=$((total + 1))
 
 if test_result "$TEST_DIR/relative-file.txt" "keep" "rm relative-file.txt" false; then passed=$((passed + 1)); else failed=$((failed + 1)); fi

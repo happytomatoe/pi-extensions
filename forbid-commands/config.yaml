@@ -77,11 +77,11 @@ allow:
   - pattern: "du *"
   - pattern: "df *"
 
-  # Allow rm with ./ prefix (current directory only - must start with ./)
-  - pattern: "rm ./*"
-  - pattern: "rm -r ./*"
-  - pattern: "rm -f ./*"
-  - pattern: "rm -rf ./*"
+  # Allow rm with ./ prefix (current directory only - no path traversal)
+  - regex: "^rm \\.\/[^.]*$"
+  - regex: "^rm -r \\.\/[^.]*$"
+  - regex: "^rm -f \\.\/[^.]*$"
+  - regex: "^rm -rf \\.\/[^.]*$"
 
   # Allow rm in /tmp
   - pattern: "rm /tmp/*"
