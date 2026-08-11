@@ -1,4 +1,4 @@
-export type PermissionState = "allow" | "ask" | "deny";
+export type PermissionState = "allow" | "deny";
 export type DecisionStrategy = "most-restrictive" | "last-match" | "first-match";
 
 export interface PatternRule {
@@ -17,7 +17,6 @@ export interface Config {
   use_dcg?: boolean;
   decision_strategy?: DecisionStrategy;
   deny: PatternRule[];
-  confirm: PatternRule[];
   allow: PatternRule[];
   block_pr_create_for_fork_upstream?: BlockPrCreateForForkUpstreamConfig;
 }

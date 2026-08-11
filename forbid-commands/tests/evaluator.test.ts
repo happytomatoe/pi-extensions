@@ -45,14 +45,16 @@ deny:
     message: "Merging PRs is forbidden"
   - regex: "cargo\\s+install"
     message: "Installing cargo packages is forbidden"
-
-confirm:
   - pattern: "rm *"
-    message: "Allow rm?"
+    message: "rm is forbidden. Use 'rm ./file.txt' for current directory or 'rm /tmp/file.txt' for /tmp"
   - pattern: "git push --force *"
-    message: "Force push?"
+    message: "Force push is forbidden"
+  - pattern: "git reset --hard *"
+    message: "Hard reset is forbidden"
 
 allow:
+  - pattern: "rm ./*"
+  - pattern: "rm /tmp/*"
   - pattern: "echo *"
   - pattern: "ls *"
   - pattern: "cat *"
@@ -78,7 +80,7 @@ allow:
   - pattern: "cp *"
   - pattern: "mv *"
   - pattern: "ln *"
-  - pattern: "rm -rf */*"
+  # Allow rm in /tmp only
   - pattern: "rm /tmp/*"
   - pattern: "rm -rf /tmp/*"
 `);
@@ -92,7 +94,7 @@ allow:
   });
   // Table-driven tests: [command, expected_state]
   // Based on patterns defined in ~/.pi/agent/forbid-commands.yaml
-  const testCases: Array<[string, "allow" | "ask" | "deny"]> = [
+  const testCases: Array<[string, "allow" | "deny"]> = [
     // Allowed commands - read-only
     ["echo hello", "allow"],
     ["ls /tmp", "allow"],
@@ -121,13 +123,16 @@ allow:
     ["ln -s /tmp/a /tmp/b", "allow"],
 
     // Ask commands - rm (in confirm block)
-    ["rm /home/user/file.txt", "ask"],
+    ["rm /home/user/file.txt", "deny"],
+    ["rm file.txt", "deny"],           // no path - use rm ./file.txt
+    ["rm subdir/file.txt", "deny"],    // no ./ - use rm ./subdir/file.txt
+    ["rm ../file.txt", "deny"],        // parent dir - use rm /absolute/path
 
     // Allowed rm commands (in allow block)
-    ["rm -rf /home/user/dir", "allow"],
+    ["rm ./file.txt", "allow"],        // matches rm ./*
+    ["rm ./subdir/file.txt", "allow"], // matches rm ./*
     ["rm /tmp/test.txt", "allow"],
     ["rm -rf /tmp/test", "allow"],
-    ["rm -rf */*", "allow"],
 
     // Denied commands - system
     ["sudo ls /tmp", "deny"],
@@ -158,9 +163,9 @@ allow:
 
     // Regex patterns
     ["gh pr merge 123", "deny"],
-    ["git push --force origin main", "ask"],
-    ["git push --force  origin main", "ask"],
-    ["git push --force origin main ", "ask"],
+    ["git push --force origin main", "deny"],
+    ["git push --force  origin main", "deny"],
+    ["git push --force origin main ", "deny"],
     ["cargo install ripgrep", "deny"],
     ["cargo install bat", "deny"],
     ["cargo install fd-find", "deny"],

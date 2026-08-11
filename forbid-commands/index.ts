@@ -117,7 +117,7 @@ export default function (pi: ExtensionAPI) {
       const tree = parseBash(command);
       if (tree) {
         const commands = enumerateCommands(tree.rootNode);
-        const allRules = [...typedConfig.deny, ...typedConfig.confirm, ...typedConfig.allow];
+        const allRules = [...typedConfig.deny, ...typedConfig.allow];
         const results = commands.map(cmd => evaluateCommand(cmd, allRules, cwd));
         const result = aggregateResults(results, typedConfig.decision_strategy);
 
@@ -128,31 +128,11 @@ export default function (pi: ExtensionAPI) {
           };
         }
 
-        if (result.state === "ask") {
-          if (!ctx.hasUI) {
-            return {
-              block: true,
-              reason: result.rule?.message || `Command requires confirmation (no UI): ${result.command}`,
-            };
-          }
-
-          const message = result.rule?.message || `Allow command?`;
-          const choice = await ctx.ui.select(
-            `${message}\n\n  ${result.command}`,
-            ["Yes", "No"],
-          );
-
-          if (choice !== "Yes") {
-            return { block: true, reason: "Blocked by user" };
-          }
-          return undefined;
-        }
-
         return undefined;
       }
     }
 
-    const allRules = [...typedConfig.deny, ...typedConfig.confirm, ...typedConfig.allow];
+    const allRules = [...typedConfig.deny, ...typedConfig.allow];
     const results = [{ text: command }].map(cmd => evaluateCommand({ text: cmd.text }, allRules, cwd));
     const result = aggregateResults(results, typedConfig.decision_strategy);
 
@@ -161,26 +141,6 @@ export default function (pi: ExtensionAPI) {
         block: true,
         reason: result.rule?.message || `Command denied: ${result.command}`,
       };
-    }
-
-    if (result.state === "ask") {
-      if (!ctx.hasUI) {
-        return {
-          block: true,
-          reason: result.rule?.message || `Command requires confirmation (no UI): ${result.command}`,
-        };
-      }
-
-      const message = result.rule?.message || `Allow command?`;
-      const choice = await ctx.ui.select(
-        `${message}\n\n  ${result.command}`,
-        ["Yes", "No"],
-      );
-
-      if (choice !== "Yes") {
-        return { block: true, reason: "Blocked by user" };
-      }
-      return undefined;
     }
 
     if (dcgAvailable) {

@@ -25,9 +25,9 @@ test-evaluator:
 test-normalize:
     npx vitest run tests/normalization.test.ts
 
-# Run E2E tests with Pi (sequential)
+# Run E2E tests with Pi
 test-e2e:
-    npx tsx tests/e2e-pi-test.ts
+    bun test-e2e-rm.ts
 
 # Show current config
 config:
