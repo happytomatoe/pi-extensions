@@ -3,7 +3,8 @@
 # Interactive install/remove of extensions via `pi install`.
 #
 # Usage:
-#   just install           — gum multi-select → pi install each
+#   just install           — gum single-select → pi install one extension
+#   just install-multiple  — gum multi-select → pi install each
 #   just list             — show available extensions
 #   just remove  <name>   — pi remove an extension
 #   just install-all      — install every extension
@@ -20,8 +21,56 @@ _extensions:
         basename "$d"
     done
 
-# Interactive multi-select picker (gum) → pi install each
+# Interactive single-select picker (gum) → pi install one extension
 install:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # build list of extension dirs
+    exts=()
+    while IFS= read -r line; do
+        exts+=("$line")
+    done < <(
+        for d in {{ REPO_DIR }}/*/; do
+            [ -f "$d/package.json" ] || continue
+            basename "$d"
+        done
+    )
+
+    if [ ${#exts[@]} -eq 0 ]; then
+        echo "No extensions found in {{ REPO_DIR }}" >&2
+        exit 1
+    fi
+
+    echo "Select an extension to install:"
+    chosen=$(printf '%s\n' "${exts[@]}" | gum choose --header "Extension" || true)
+
+    if [ -z "$chosen" ]; then
+        echo "Nothing selected."
+        exit 0
+    fi
+
+    echo ""
+    echo "▸ Installing $chosen ..."
+    if pi install "{{ REPO_DIR }}/$chosen" 2>&1; then
+        echo "\nDone. Installed $chosen."
+    else
+        echo "\nFailed to install $chosen."
+        exit 1
+    fi
+
+    echo "Run 'pi config' to enable/disable individual extensions."
+
+    # offer to setup DCG allowlist if forbid-commands was installed
+    if [ "$chosen" = "forbid-commands" ]; then
+        echo ""
+        if gum confirm "Set up DCG allowlist for project work? (allows rm/mv in ./ and /tmp/)"; then
+            just setup-allowlist
+        fi
+    fi
+
+# Interactive multi-select picker (gum) → pi install each
+install-multiple:
     #!/usr/bin/env bash
     set -euo pipefail
 
