@@ -59,6 +59,13 @@ deny:
     message: "Force push is forbidden. Use git revert instead."
   - pattern: "git reset --hard *"
     message: "Hard reset is forbidden. Use git revert instead."
+  - pattern: "find *"
+    message: "Use fd. Run fd --help command for documentation"
+  - pattern: "grep *"
+    message: "Use rg. Run rg --help command for documentation"
+
+
+
 
 
 # ALLOW — skip DCG too
