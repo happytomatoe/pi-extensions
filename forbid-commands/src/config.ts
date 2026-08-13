@@ -62,8 +62,8 @@ function parseSimpleYaml(raw: string): Record<string, unknown> {
     const listObjStart = line.match(/^\s+-\s+(regex|pattern):\s*(["'])(.*?)\2\s*$/);
     if (listObjStart && currentKey) {
       if (!currentList) currentList = [];
-      const [, key, , value] = listObjStart;
-      currentObj = { [key]: unescapeYamlDoubleQuoted(value) };
+      const [, key, quote, value] = listObjStart;
+      currentObj = { [key]: quote === '"' ? unescapeYamlDoubleQuoted(value) : value };
       currentList.push(currentObj);
       continue;
     }

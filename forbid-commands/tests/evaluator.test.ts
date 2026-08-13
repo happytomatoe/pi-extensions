@@ -51,6 +51,8 @@ deny:
     message: "Force push is forbidden"
   - pattern: "git reset --hard *"
     message: "Hard reset is forbidden"
+  - regex: 'literal\\\\dot'
+    message: "Single-quoted regex must keep literal backslashes"
 
 allow:
   - regex: "^rm(?: -[rf]+)?\\s+(?!/)(?:(?!\\.\\.)[^\\s])*$"
@@ -111,6 +113,12 @@ allow:
     ["git status", "allow"],
     ["git log --oneline", "allow"],
     ["git diff main", "allow"],
+
+    // Single-quoted YAML regex must keep backslashes literal (a naive
+    // "unescape as if double-quoted" parser would collapse \\ to \,
+    // turning \\d into a digit-class escape and changing what matches).
+    ["run literal\\dot", "deny"], // contains one literal backslash before "dot"
+    ["run literal9dot", "allow"], // would match only under the buggy unescape
     ["git show HEAD", "allow"],
     ["git branch -a", "allow"],
     ["git remote -v", "allow"],
