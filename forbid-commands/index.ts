@@ -117,16 +117,6 @@ export default function (pi: ExtensionAPI) {
       const tree = parseBash(command);
       if (tree) {
         const commands = enumerateCommands(tree.rootNode);
-        const hardDenyResult = aggregateResults(
-          commands.map(cmd => evaluateCommand(cmd, typedConfig.hard_deny ?? [], cwd)),
-          "most-restrictive",
-        );
-        if (hardDenyResult.state === "deny") {
-          return {
-            block: true,
-            reason: hardDenyResult.rule?.message || `Command hard-denied: ${hardDenyResult.command}`,
-          };
-        }
         const allRules = [...typedConfig.deny, ...typedConfig.allow];
         const results = commands.map(cmd => evaluateCommand(cmd, allRules, cwd));
         const result = aggregateResults(results, typedConfig.decision_strategy);
@@ -140,17 +130,6 @@ export default function (pi: ExtensionAPI) {
 
         return undefined;
       }
-    }
-
-    const hardDenyResult = aggregateResults(
-      [{ text: command }].map(cmd => evaluateCommand({ text: cmd.text }, typedConfig.hard_deny ?? [], cwd)),
-      "most-restrictive",
-    );
-    if (hardDenyResult.state === "deny") {
-      return {
-        block: true,
-        reason: hardDenyResult.rule?.message || `Command hard-denied: ${hardDenyResult.command}`,
-      };
     }
 
     const allRules = [...typedConfig.deny, ...typedConfig.allow];

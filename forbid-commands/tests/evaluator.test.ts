@@ -14,10 +14,6 @@ describe("checkCommand", () => {
     // Create temporary HOME with test config
     mkdirSync(configDir, { recursive: true });
     writeFileSync(configFile, `
-hard_deny:
-  - pattern: "cat /tmp/forbid-policy.yaml"
-    message: "Policy file is protected"
-
 deny:
   - pattern: "shutdown *"
     message: "Shutdown is forbidden"
@@ -103,7 +99,6 @@ allow:
     ["echo hello", "allow"],
     ["ls /tmp", "allow"],
     ["cat /etc/hostname", "allow"],
-    ["cat /tmp/forbid-policy.yaml", "deny"], // hard deny overrides allow: cat *
     ["head /etc/passwd", "allow"],
     ["tail /var/log/syslog", "allow"],
     ["grep pattern file.txt", "allow"],

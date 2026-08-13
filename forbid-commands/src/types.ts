@@ -16,8 +16,6 @@ export interface BlockPrCreateForForkUpstreamConfig {
 export interface Config {
   use_dcg?: boolean;
   decision_strategy?: DecisionStrategy;
-  /** Rules that cannot be overridden by ordinary allow rules. */
-  hard_deny?: PatternRule[];
   deny: PatternRule[];
   allow: PatternRule[];
   block_pr_create_for_fork_upstream?: BlockPrCreateForForkUpstreamConfig;
