@@ -24,7 +24,7 @@ _extensions:
 # Interactive single-select picker (gum) → pi install one extension
 install:
     #!/usr/bin/env bash
-    set -euo pipefail
+    set -euxo pipefail
 
     # build list of extension dirs
     exts=()
@@ -53,22 +53,14 @@ install:
     echo ""
     echo "▸ Installing $chosen ..."
     if pi install "{{ REPO_DIR }}/$chosen" 2>&1; then
-        echo "\nDone. Installed $chosen."
+        echo "Done. Installed $chosen."
     else
-        echo "\nFailed to install $chosen."
+        echo "Failed to install $chosen."
         exit 1
     fi
 
+    cd {{REPO_DIR}}/$chosen && npm install
     echo "Run 'pi config' to enable/disable individual extensions."
-
-    # offer to setup DCG allowlist if forbid-commands was installed
-    if [ "$chosen" = "forbid-commands" ]; then
-        echo ""
-        if gum confirm "Set up DCG allowlist for project work? (allows rm/mv in ./ and /tmp/)"; then
-            just setup-allowlist
-        fi
-    fi
-
 # Interactive multi-select picker (gum) → pi install each
 install-multiple:
     #!/usr/bin/env bash
