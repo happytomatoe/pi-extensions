@@ -14,6 +14,10 @@ describe("checkCommand", () => {
     // Create temporary HOME with test config
     mkdirSync(configDir, { recursive: true });
     writeFileSync(configFile, `
+hard_deny:
+  - pattern: "cat /tmp/forbid-policy.yaml"
+    message: "Policy file is protected"
+
 deny:
   - pattern: "shutdown *"
     message: "Shutdown is forbidden"
@@ -46,14 +50,14 @@ deny:
   - regex: "cargo\\s+install"
     message: "Installing cargo packages is forbidden"
   - pattern: "rm *"
-    message: "rm is forbidden. Use 'rm ./file.txt' for current directory or 'rm /tmp/file.txt' for /tmp"
+    message: "rm is forbidden outside the current directory or /tmp"
   - pattern: "git push --force *"
     message: "Force push is forbidden"
   - pattern: "git reset --hard *"
     message: "Hard reset is forbidden"
 
 allow:
-  - pattern: "rm ./*"
+  - regex: "^rm(?: -[rf]+)?\\s+(?!/)(?:(?!\\.\\.)[^\\s])*$"
   - pattern: "rm /tmp/*"
   - pattern: "echo *"
   - pattern: "ls *"
@@ -99,6 +103,7 @@ allow:
     ["echo hello", "allow"],
     ["ls /tmp", "allow"],
     ["cat /etc/hostname", "allow"],
+    ["cat /tmp/forbid-policy.yaml", "deny"], // hard deny overrides allow: cat *
     ["head /etc/passwd", "allow"],
     ["tail /var/log/syslog", "allow"],
     ["grep pattern file.txt", "allow"],
@@ -124,13 +129,18 @@ allow:
 
     // Ask commands - rm (in confirm block)
     ["rm /home/user/file.txt", "deny"],
-    ["rm file.txt", "deny"],           // no path - use rm ./file.txt
-    ["rm subdir/file.txt", "deny"],    // no ./ - use rm ./subdir/file.txt
     ["rm ../file.txt", "deny"],        // parent dir - use rm /absolute/path
 
     // Allowed rm commands (in allow block)
-    ["rm ./file.txt", "allow"],        // matches rm ./*
-    ["rm ./subdir/file.txt", "allow"], // matches rm ./*
+    ["rm ./file.txt", "allow"],        // dotted filename must not be excluded by the exception
+    ["rm ./subdir/file.txt", "allow"], // matches rm ./... exception
+    ["rm -rf ./file.txt", "allow"],    // flag + dotted filename
+    ["rm ./../etc/passwd", "deny"],    // traversal right after ./
+    ["rm ./foo/../bar", "deny"],       // traversal later in the path
+    ["rm ./..", "deny"],               // bare traversal
+    ["rm file.txt", "allow"],          // relative path in cwd, no ./ required
+    ["rm subdir/file.txt", "allow"],   // relative path in cwd, no ./ required
+    ["rm -rf file.txt", "allow"],      // flag + bare relative path
     ["rm /tmp/test.txt", "allow"],
     ["rm -rf /tmp/test", "allow"],
 

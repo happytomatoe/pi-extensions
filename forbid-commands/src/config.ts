@@ -59,10 +59,10 @@ function parseSimpleYaml(raw: string): Record<string, unknown> {
       continue;
     }
 
-    const listObjStart = line.match(/^\s+-\s+(regex|pattern):\s*"(.+?)"\s*$/);
+    const listObjStart = line.match(/^\s+-\s+(regex|pattern):\s*(["'])(.*?)\2\s*$/);
     if (listObjStart && currentKey) {
       if (!currentList) currentList = [];
-      const [, key, value] = listObjStart;
+      const [, key, , value] = listObjStart;
       currentObj = { [key]: unescapeYamlDoubleQuoted(value) };
       currentList.push(currentObj);
       continue;
@@ -131,6 +131,7 @@ export function loadConfig(): Config {
   const defaultConfig: Config = {
     use_dcg: true,
     decision_strategy: "most-restrictive",
+    hard_deny: [],
     deny: [
       { pattern: "shutdown *", state: "deny", message: "Shutdown is forbidden" },
       { pattern: "reboot", state: "deny", message: "Reboot is forbidden" },
@@ -146,34 +147,40 @@ export function loadConfig(): Config {
       { pattern: "sftp *", state: "deny", message: "SFTP is blocked (uses SSH). Use shell-use skill for interactive file transfers." },
       { pattern: "sftp", state: "deny", message: "SFTP is blocked (uses SSH). Use shell-use skill for interactive file transfers." },
     ],
+    // Broad wildcard allow rules are commented out (see forbid-commands.yaml
+    // for rationale): with the default-allow fallback they were no-ops that
+    // only risked silently overriding future deny/hard_deny rules for the
+    // same command family, since allow is concatenated after deny and
+    // evaluated last-match-wins. Only genuine exceptions to a deny rule
+    // (the rm carve-outs) remain active.
     allow: [
-      { pattern: "ls *", state: "allow" },
-      { pattern: "cat *", state: "allow" },
-      { pattern: "head *", state: "allow" },
-      { pattern: "tail *", state: "allow" },
-      { pattern: "grep *", state: "allow" },
-      { pattern: "find *", state: "allow" },
-      { pattern: "wc *", state: "allow" },
-      { pattern: "file *", state: "allow" },
-      { pattern: "stat *", state: "allow" },
-      { pattern: "du *", state: "allow" },
-      { pattern: "df *", state: "allow" },
-      { pattern: "git status", state: "allow" },
-      { pattern: "git log *", state: "allow" },
-      { pattern: "git diff *", state: "allow" },
-      { pattern: "git show *", state: "allow" },
-      { pattern: "git branch *", state: "allow" },
-      { pattern: "git remote *", state: "allow" },
-      { pattern: "git stash list", state: "allow" },
-      { pattern: "git tag *", state: "allow" },
-      { pattern: "mkdir *", state: "allow" },
-      { pattern: "touch *", state: "allow" },
-      { pattern: "cp *", state: "allow" },
-      { pattern: "mv *", state: "allow" },
-      { pattern: "ln *", state: "allow" },
-      { pattern: "sed -i *", state: "allow" },
-      { pattern: "tee *", state: "allow" },
-      { pattern: "xargs *", state: "allow" },
+      // { pattern: "ls *", state: "allow" },
+      // { pattern: "cat *", state: "allow" },
+      // { pattern: "head *", state: "allow" },
+      // { pattern: "tail *", state: "allow" },
+      // { pattern: "grep *", state: "allow" },
+      // { pattern: "find *", state: "allow" },
+      // { pattern: "wc *", state: "allow" },
+      // { pattern: "file *", state: "allow" },
+      // { pattern: "stat *", state: "allow" },
+      // { pattern: "du *", state: "allow" },
+      // { pattern: "df *", state: "allow" },
+      // { pattern: "git status", state: "allow" },
+      // { pattern: "git log *", state: "allow" },
+      // { pattern: "git diff *", state: "allow" },
+      // { pattern: "git show *", state: "allow" },
+      // { pattern: "git branch *", state: "allow" },
+      // { pattern: "git remote *", state: "allow" },
+      // { pattern: "git stash list", state: "allow" },
+      // { pattern: "git tag *", state: "allow" },
+      // { pattern: "mkdir *", state: "allow" },
+      // { pattern: "touch *", state: "allow" },
+      // { pattern: "cp *", state: "allow" },
+      // { pattern: "mv *", state: "allow" },
+      // { pattern: "ln *", state: "allow" },
+      // { pattern: "sed -i *", state: "allow" },
+      // { pattern: "tee *", state: "allow" },
+      // { pattern: "xargs *", state: "allow" },
     ],
     block_pr_create_for_fork_upstream: {
       enabled: true,
@@ -198,6 +205,9 @@ export function loadConfig(): Config {
       use_dcg: parsed.use_dcg !== undefined ? Boolean(parsed.use_dcg) : defaultConfig.use_dcg,
       decision_strategy: validStrategy ?? defaultConfig.decision_strategy,
       deny: Array.isArray(parsed.deny) ? normalizeRules(parsed.deny, "deny") : defaultConfig.deny,
+      hard_deny: Array.isArray(parsed.hard_deny)
+        ? normalizeRules(parsed.hard_deny, "deny")
+        : defaultConfig.hard_deny,
       allow: Array.isArray(parsed.allow) ? normalizeRules(parsed.allow, "allow") : defaultConfig.allow,
       block_pr_create_for_fork_upstream: parsed.block_pr_create_for_fork_upstream
         ? normalizeBlockPrCreateForForkUpstreamConfig(

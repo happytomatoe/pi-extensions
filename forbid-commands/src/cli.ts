@@ -34,8 +34,17 @@ export function checkCommand(command: string): CheckResult {
   // Get all text versions to try (original + normalized)
   const textsToTry = [command, normalized];
   
-  // Combine all rules in order: deny, allow
-  // Last matching rule wins (like the extension)
+  // Hard-deny rules are a separate, non-overridable tier.
+  for (const text of textsToTry) {
+    for (const rule of config.hard_deny ?? []) {
+      if (matchesRule(rule, text)) {
+        return { state: "deny", rule };
+      }
+    }
+  }
+
+  // Ordinary rules retain last-match-wins behavior for scoped exceptions.
+  // A later allow can override an ordinary deny, but never a hard deny.
   const allRules: Array<{ state: "allow" | "deny"; pattern?: string; regex?: string; message?: string }> = [
     ...config.deny.map(r => ({ ...r, state: "deny" as const })),
     ...config.allow.map(r => ({ ...r, state: "allow" as const })),
