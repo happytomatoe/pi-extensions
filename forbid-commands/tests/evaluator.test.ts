@@ -46,14 +46,16 @@ deny:
   - regex: "cargo\\s+install"
     message: "Installing cargo packages is forbidden"
   - pattern: "rm *"
-    message: "rm is forbidden. Use 'rm ./file.txt' for current directory or 'rm /tmp/file.txt' for /tmp"
+    message: "rm is forbidden outside the current directory or /tmp"
   - pattern: "git push --force *"
     message: "Force push is forbidden"
   - pattern: "git reset --hard *"
     message: "Hard reset is forbidden"
+  - regex: 'literal\\\\dot'
+    message: "Single-quoted regex must keep literal backslashes"
 
 allow:
-  - pattern: "rm ./*"
+  - regex: "^rm(?: -[rf]+)?\\s+(?!/)(?:(?!\\.\\.)[^\\s])*$"
   - pattern: "rm /tmp/*"
   - pattern: "echo *"
   - pattern: "ls *"
@@ -111,6 +113,12 @@ allow:
     ["git status", "allow"],
     ["git log --oneline", "allow"],
     ["git diff main", "allow"],
+
+    // Single-quoted YAML regex must keep backslashes literal (a naive
+    // "unescape as if double-quoted" parser would collapse \\ to \,
+    // turning \\d into a digit-class escape and changing what matches).
+    ["run literal\\dot", "deny"], // contains one literal backslash before "dot"
+    ["run literal9dot", "allow"], // would match only under the buggy unescape
     ["git show HEAD", "allow"],
     ["git branch -a", "allow"],
     ["git remote -v", "allow"],
@@ -124,13 +132,18 @@ allow:
 
     // Ask commands - rm (in confirm block)
     ["rm /home/user/file.txt", "deny"],
-    ["rm file.txt", "deny"],           // no path - use rm ./file.txt
-    ["rm subdir/file.txt", "deny"],    // no ./ - use rm ./subdir/file.txt
     ["rm ../file.txt", "deny"],        // parent dir - use rm /absolute/path
 
     // Allowed rm commands (in allow block)
-    ["rm ./file.txt", "allow"],        // matches rm ./*
-    ["rm ./subdir/file.txt", "allow"], // matches rm ./*
+    ["rm ./file.txt", "allow"],        // dotted filename must not be excluded by the exception
+    ["rm ./subdir/file.txt", "allow"], // matches rm ./... exception
+    ["rm -rf ./file.txt", "allow"],    // flag + dotted filename
+    ["rm ./../etc/passwd", "deny"],    // traversal right after ./
+    ["rm ./foo/../bar", "deny"],       // traversal later in the path
+    ["rm ./..", "deny"],               // bare traversal
+    ["rm file.txt", "allow"],          // relative path in cwd, no ./ required
+    ["rm subdir/file.txt", "allow"],   // relative path in cwd, no ./ required
+    ["rm -rf file.txt", "allow"],      // flag + bare relative path
     ["rm /tmp/test.txt", "allow"],
     ["rm -rf /tmp/test", "allow"],
 

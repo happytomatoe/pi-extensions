@@ -59,11 +59,11 @@ function parseSimpleYaml(raw: string): Record<string, unknown> {
       continue;
     }
 
-    const listObjStart = line.match(/^\s+-\s+(regex|pattern):\s*"(.+?)"\s*$/);
+    const listObjStart = line.match(/^\s+-\s+(regex|pattern):\s*(["'])(.*?)\2\s*$/);
     if (listObjStart && currentKey) {
       if (!currentList) currentList = [];
-      const [, key, value] = listObjStart;
-      currentObj = { [key]: unescapeYamlDoubleQuoted(value) };
+      const [, key, quote, value] = listObjStart;
+      currentObj = { [key]: quote === '"' ? unescapeYamlDoubleQuoted(value) : value };
       currentList.push(currentObj);
       continue;
     }
@@ -146,35 +146,11 @@ export function loadConfig(): Config {
       { pattern: "sftp *", state: "deny", message: "SFTP is blocked (uses SSH). Use shell-use skill for interactive file transfers." },
       { pattern: "sftp", state: "deny", message: "SFTP is blocked (uses SSH). Use shell-use skill for interactive file transfers." },
     ],
-    allow: [
-      { pattern: "ls *", state: "allow" },
-      { pattern: "cat *", state: "allow" },
-      { pattern: "head *", state: "allow" },
-      { pattern: "tail *", state: "allow" },
-      { pattern: "grep *", state: "allow" },
-      { pattern: "find *", state: "allow" },
-      { pattern: "wc *", state: "allow" },
-      { pattern: "file *", state: "allow" },
-      { pattern: "stat *", state: "allow" },
-      { pattern: "du *", state: "allow" },
-      { pattern: "df *", state: "allow" },
-      { pattern: "git status", state: "allow" },
-      { pattern: "git log *", state: "allow" },
-      { pattern: "git diff *", state: "allow" },
-      { pattern: "git show *", state: "allow" },
-      { pattern: "git branch *", state: "allow" },
-      { pattern: "git remote *", state: "allow" },
-      { pattern: "git stash list", state: "allow" },
-      { pattern: "git tag *", state: "allow" },
-      { pattern: "mkdir *", state: "allow" },
-      { pattern: "touch *", state: "allow" },
-      { pattern: "cp *", state: "allow" },
-      { pattern: "mv *", state: "allow" },
-      { pattern: "ln *", state: "allow" },
-      { pattern: "sed -i *", state: "allow" },
-      { pattern: "tee *", state: "allow" },
-      { pattern: "xargs *", state: "allow" },
-    ],
+    // Broad wildcard allow rules were removed: with the default-allow
+    // fallback they were no-ops that only risked silently overriding
+    // future deny rules for the same command family, since allow is
+    // concatenated after deny and evaluated last-match-wins.
+    allow: [],
     block_pr_create_for_fork_upstream: {
       enabled: true,
       exempt_repos: [],
