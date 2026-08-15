@@ -1,0 +1,182 @@
+# =============================================================================
+# forbid-commands Configuration Template
+# =============================================================================
+#
+# Place this file at:
+#   Global:   ~/.pi/agent/forbid-commands.yaml
+#   Project:  .pi/forbid-commands.yaml
+#
+# Priority: deny rules > allow rules > DCG (if enabled)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# DCG (Dangerous Command Guard) — AI-powered fallback
+# -----------------------------------------------------------------------------
+# When enabled, commands not matched by deny/allow rules are analyzed by DCG.
+# Set to false to only use explicit rules.
+use_dcg: true
+
+# -----------------------------------------------------------------------------
+# DENY — Hard block, never allowed
+# -----------------------------------------------------------------------------
+# Commands matching these patterns are always blocked with an error message.
+# Use `pattern` for simple wildcard matching (supports * and ?).
+# Use `regex` for complex patterns (full regex syntax, escape backslashes).
+deny:
+  # --- System commands ---
+  - pattern: "shutdown *"
+    message: "Shutdown is forbidden"
+  - pattern: "reboot"
+    message: "Reboot is forbidden"
+  - pattern: "halt"
+    message: "Halt is forbidden"
+  - pattern: "poweroff"
+    message: "Power off is forbidden"
+
+  # --- Process management ---
+  - pattern: "kill *"
+    message: "Killing processes by PID is forbidden"
+  - pattern: "killall *"
+    message: "Killall is forbidden"
+  - pattern: "pkill *"
+    message: "pkill is forbidden"
+  - pattern: "su *"
+    message: "Switching user is forbidden"
+  - pattern: "sudo *"
+    message: "Sudo is forbidden"
+
+  # --- Dangerous git operations ---
+  - pattern: "git push --force *"
+    message: "Force push is forbidden. Use git revert instead."
+  - pattern: "git reset --hard *"
+    message: "Hard reset is forbidden. Use git revert instead."
+  # Regex for more precise matching (note: double-escape backslashes in YAML)
+  - regex: "^\\s*git\\s+push\\s+--force\\s+origin\\s+main\\s*$"
+    message: "Force pushing to origin main is forbidden"
+  - regex: "^\\s*git\\s+commit\\b.*--no-verify"
+    message: "git commit --no-verify is forbidden. Hooks must run."
+  - regex: "^\\s*git\\s+push\\b.*--no-verify"
+    message: "git push --no-verify is forbidden. Hooks must run."
+
+  # --- Destructive file operations ---
+  - pattern: "rm *"
+    message: "rm is forbidden. Use 'rm ./file.txt' for current directory"
+  - pattern: "rmdir *"
+    message: "rmdir is forbidden"
+
+  # --- Use modern alternatives ---
+  - pattern: "find *"
+    message: "Use 'fd' instead. Run: fd --help"
+  - pattern: "grep *"
+    message: "Use 'rg' instead. Run: rg --help"
+  - pattern: "cargo install *"
+    message: "Use 'cargo binstall' instead"
+
+  # --- Custom example: Block specific dangerous paths ---
+  # - regex: "^rm\\s+(-[rRf]*\\s+)?/(?!tmp/)"
+  #   message: "rm outside /tmp is forbidden"
+
+# -----------------------------------------------------------------------------
+# ALLOW — Skip DCG analysis
+# -----------------------------------------------------------------------------
+# Commands matching these patterns are always allowed, bypassing DCG.
+# Useful for read-only commands and safe operations you trust.
+allow:
+  # --- Read-only commands ---
+  - pattern: "echo *"
+  - pattern: "ls *"
+  - pattern: "cat *"
+  - pattern: "head *"
+  - pattern: "tail *"
+  - pattern: "wc *"
+  - pattern: "file *"
+  - pattern: "stat *"
+  - pattern: "du *"
+  - pattern: "df *"
+  - pattern: "which *"
+  - pattern: "type *"
+  - pattern: "env"
+  - pattern: "printenv *"
+
+  # --- Git read-only ---
+  - pattern: "git status"
+  - pattern: "git log *"
+  - pattern: "git diff *"
+  - pattern: "git show *"
+  - pattern: "git branch *"
+  - pattern: "git remote *"
+  - pattern: "git stash list"
+  - pattern: "git tag *"
+  - pattern: "git rev-parse *"
+  - pattern: "git describe *"
+
+  # --- File operations (safe) ---
+  - pattern: "mkdir *"
+  - pattern: "touch *"
+  - pattern: "cp *"
+  - pattern: "mv *"
+  - pattern: "ln *"
+  - pattern: "pwd"
+
+  # --- Allow rm in specific safe locations ---
+  # Current directory only (no path traversal)
+  - regex: "^rm\\s+\\.\\/\\S+$"
+  - regex: "^rm\\s+-[rRf]*\\s+\\.\\/\\S+$"
+  # /tmp only
+  - pattern: "rm /tmp/*"
+  - pattern: "rm -r /tmp/*"
+  - pattern: "rm -f /tmp/*"
+  - pattern: "rm -rf /tmp/*"
+
+  # --- Text processing ---
+  - pattern: "sed -i *"
+  - pattern: "tee *"
+  - pattern: "xargs *"
+  - pattern: "sort *"
+  - pattern: "uniq *"
+  - pattern: "cut *"
+  - pattern: "awk *"
+
+# -----------------------------------------------------------------------------
+# Block PR creation to upstream (for fork-based workflows)
+# -----------------------------------------------------------------------------
+# Prevents the agent from creating PRs to upstream repos when working on forks.
+block_pr_create_for_fork_upstream:
+  enabled: false
+  exempt_repos: []  # List of repos to exempt (owner/repo format)
+
+# =============================================================================
+# PATTERN SYNTAX REFERENCE
+# =============================================================================
+#
+# Pattern (simple wildcard):
+#   *        — matches any characters (including none)
+#   ?        — matches exactly one character
+#   Examples:
+#     "rm *"           — matches "rm /tmp/foo"
+#     "git push *"     — matches "git push origin main"
+#     "kill ?"         — matches "kill 1" but not "kill 12"
+#
+# Regex (advanced):
+#   Uses full JavaScript regex syntax.
+#   Double-escape backslashes in YAML: \\s → \s in regex
+#   Anchors: ^ = start, $ = end
+#   Examples:
+#     "^\\s*git\\s+push\\s+--force"  — matches "  git push --force ..."
+#     "^rm\\s+\\.\\/\\S+$"          — matches "rm ./file.txt"
+#
+# =============================================================================
+# DECISION FLOW
+# =============================================================================
+#
+#   Command received
+#        ↓
+#   Match DENY pattern?  → BLOCK (error message)
+#        ↓ (no match)
+#   Match ALLOW pattern? → ALLOW (skip DCG)
+#        ↓ (no match)
+#   DCG enabled?
+#        ├─ yes → DCG analyzes → ALLOW or BLOCK
+#        └─ no  → ALLOW (default)
+#
+# =============================================================================
