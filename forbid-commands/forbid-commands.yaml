@@ -1,1 +1,122 @@
-/var/home/l/.pi/agent/forbid-commands.yaml
+# forbid-commands configuration
+# Place this file at:
+#   Global:   ~/.pi/agent/forbid-commands.yaml
+#   Project:  .pi/forbid-commands.yaml
+#
+# Two blocks: deny, allow
+# Deny rules take precedence over allow rules
+
+# Enable DCG as fallback for commands not matched by rules above
+use_dcg: true
+
+# HARD BLOCK — never allowed, no questions
+deny:
+  - pattern: "shutdown *"
+    message: "Shutdown is forbidden"
+  - pattern: "reboot"
+    message: "Reboot is forbidden"
+  - pattern: "halt"
+    message: "Halt is forbidden"
+  - pattern: "poweroff"
+    message: "Power off is forbidden"
+  - pattern: "killall *pi*"
+    message: "Killing pi processes is forbidden"
+  - pattern: "kill *"
+    message: "Killing processes by PID is forbidden"
+  - pattern: "pkill *brave*"
+    message: "Killing Brave processes is forbidden"
+  - pattern: "pkill brave"
+    message: "Killing Brave processes is forbidden"
+  - pattern: "su *"
+    message: "Switching user is forbidden"
+  - regex: "^\\s*git\\s+push\\s+--force\\s+origin\\s+main\\s*$"
+    message: "Force pushing to origin main is forbidden"
+  # SSH is forbidden — use shell-use skill for persistent/interactive connections
+  - pattern: "ssh *"
+    message: "SSH is blocked. Use the shell-use skill for terminal connections and interactive sessions."
+  - pattern: "ssh"
+    message: "SSH is blocked. Use the shell-use skill for terminal connections and interactive sessions."
+  - pattern: "scp *"
+    message: "SCP is blocked (uses SSH). Use shell-use skill for file transfers or sftp."
+  - pattern: "sftp *"
+    message: "SFTP is blocked (uses SSH). Use shell-use skill for interactive file transfers."
+  - pattern: "sftp"
+    message: "SFTP is blocked (uses SSH). Use shell-use skill for interactive file transfers."
+  - pattern: "sudo *"
+    message: "Sudo is forbidden. If you need to install dnf package use toolbox"
+  - pattern: "cargo install *"
+    message: "Use cargo binstall. How to use - cargo binstall <package-name>"
+  - pattern: "rm *"
+    message: "rm is forbidden. Use 'rm ./file.txt' for current directory or 'rm /tmp/file.txt' for /tmp only"
+  - pattern: "git push --force *"
+    message: "Force push is forbidden. Use git revert instead."
+  - pattern: "git reset --hard *"
+    message: "Hard reset is forbidden. Use git revert instead."
+  - pattern: "find *"
+    message: "Use fd. Run fd --help command for documentation"
+  - pattern: "grep *"
+    message: "Use rg. Run rg --help command for documentation"
+  - regex: "^\\s*git\\s+commit\\b.*--no-verify"
+    message: "git commit --no-verify is forbidden. Hooks must run."
+  - regex: "^\\s*git\\s+push\\b.*--no-verify"
+    message: "git push --no-verify is forbidden. Hooks must run."
+
+
+
+
+
+
+# ALLOW — skip DCG too
+allow:
+  # Read-only
+  - pattern: "echo *"
+  - pattern: "ls *"
+  - pattern: "cat *"
+  - pattern: "head *"
+  - pattern: "tail *"
+  - pattern: "wc *"
+  - pattern: "file *"
+  - pattern: "stat *"
+  - pattern: "du *"
+  - pattern: "df *"
+
+  # Allow rm with ./ prefix (current directory only - no path traversal)
+  - regex: "^rm \\.\/[^.]*$"
+  - regex: "^rm -r \\.\/[^.]*$"
+  - regex: "^rm -f \\.\/[^.]*$"
+  - regex: "^rm -rf \\.\/[^.]*$"
+
+  # Allow rm in /tmp
+  - pattern: "rm /tmp/*"
+  - pattern: "rm -r /tmp/*"
+  - pattern: "rm -f /tmp/*"
+  - pattern: "rm -rf /tmp/*"
+
+  # Git read-only
+  - pattern: "git status"
+  - pattern: "git log *"
+  - pattern: "git diff *"
+  - pattern: "git show *"
+  - pattern: "git branch *"
+  - pattern: "git remote *"
+  - pattern: "git stash list"
+  - pattern: "git tag *"
+
+  # File operations
+  - pattern: "mkdir *"
+  - pattern: "touch *"
+  - pattern: "cp *"
+  - pattern: "mv *"
+  - pattern: "ln *"
+
+  # Project-specific: allow editing in current dir
+  - pattern: "sed -i *"
+  - pattern: "tee *"
+  - pattern: "xargs *"
+
+# Block PR creation to upstream when working with forks
+# Pi coding agent is forbidden from creating PRs to upstream repository
+block_pr_create_for_fork_upstream:
+  enabled: true
+  exempt_repos: []  # List of repos to exempt (owner/repo format)
+
