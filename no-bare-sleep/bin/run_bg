@@ -1,0 +1,65 @@
+#!/bin/bash
+# run_bg - Run a command in the background with output tracking
+#
+# Usage:
+#   run_bg <description> <cmd...>
+#
+# Example:
+#   run_bg "npm build" npm run build
+#   run_bg "docker compose up" docker compose up -d
+#
+# What it does:
+#   1. Runs the command in the background
+#   2. Saves stdout to /tmp/<description>.stdout.log
+#   3. Saves stderr to /tmp/<description>.stderr.log
+#   4. Saves combined output to /tmp/<description>.log
+#   5. Prints the PID and file paths
+#
+# After the command finishes, check results:
+#   cat /tmp/<description>.stdout.log
+#   cat /tmp/<description>.stderr.log
+#
+# Wait for completion using wait_until:
+#   wait_until 180 5 "<description> complete" kill -0 <PID> 2>/dev/null
+
+set -euo pipefail
+
+if [ $# -lt 2 ]; then
+    echo "Usage: run_bg <description> <cmd...>" >&2
+    echo "Example: run_bg 'npm build' npm run build" >&2
+    exit 1
+fi
+
+DESCRIPTION="$1"
+shift
+
+# Sanitize description for filename (replace spaces and special chars with underscores)
+SAFE_DESC=$(echo "$DESCRIPTION" | tr ' /:' '_' | tr -cd '[:alnum:]_.-')
+
+STDOUT_FILE="/tmp/${SAFE_DESC}.stdout.log"
+STDERR_FILE="/tmp/${SAFE_DESC}.stderr.log"
+COMBINED_FILE="/tmp/${SAFE_DESC}.log"
+PID_FILE="/tmp/${SAFE_DESC}.pid"
+
+# Clear previous logs
+> "$STDOUT_FILE"
+> "$STDERR_FILE"
+> "$COMBINED_FILE"
+
+# Run command in background, redirect outputs
+"$@" > >(tee "$STDOUT_FILE" >> "$COMBINED_FILE") 2> >(tee "$STDERR_FILE" >&2 >> "$COMBINED_FILE") &
+PID=$!
+
+echo "$PID" > "$PID_FILE"
+
+echo "Started '$DESCRIPTION' with PID: $PID"
+echo "Files:"
+echo "  stdout: $STDOUT_FILE"
+echo "  stderr: $STDERR_FILE"
+echo "  combined: $COMBINED_FILE"
+echo ""
+echo "Wait for completion:"
+echo "  wait_until 180 5 \"${DESCRIPTION} complete\" kill -0 $PID 2>/dev/null"
+echo ""
+echo "Check if still running:"
+echo "  kill -0 $PID 2>/dev/null && echo 'Running' || echo 'Done'"
