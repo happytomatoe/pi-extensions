@@ -9,6 +9,7 @@
  * Or place in ~/.pi/agent/extensions/ for auto-discovery.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { createLocalBashOperations } from "@earendil-works/pi-coding-agent";
 
 // Regex to parse `abbr -a -- key value` or `abbr -a -- key 'value'`
 const ABBR_LINE_RE = /^abbr -a -- (\S+)\s+(.+)$/;
@@ -99,7 +100,7 @@ export default function (pi: ExtensionAPI) {
       return { action: "continue" };
     }
 
-    // Skip whole-line bash commands (! prefix)
+    // Skip whole-line bash commands (! prefix) - handled by user_bash event
     if (event.text.trimStart().startsWith("!")) {
       return { action: "continue" };
     }
@@ -116,6 +117,29 @@ export default function (pi: ExtensionAPI) {
     }
 
     return { action: "continue" };
+  });
+
+  // Expand abbreviations in ! and !! bash commands
+  pi.on("user_bash", async (event, ctx) => {
+    if (Object.keys(abbreviations).length === 0) return;
+
+    const expanded = expandText(event.command);
+    if (expanded === event.command) return;
+
+    ctx.ui.notify(
+      `Expanded: !${event.command} → !${expanded}`,
+      "info",
+    );
+
+    // Wrap built-in bash to execute the expanded command
+    const local = createLocalBashOperations();
+    return {
+      operations: {
+        exec(command, cwd, options) {
+          return local.exec(expanded, cwd, options);
+        },
+      },
+    };
   });
 
   // /abbr command to list abbreviations
