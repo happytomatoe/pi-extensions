@@ -17,6 +17,9 @@ import { loadConfig } from "./config";
 import { wildcardMatch } from "./wildcard-utils";
 import { normalizeCommand } from "./normalize";
 import { pathToFileURL } from "node:url";
+import { initParser, parseBash, isParserReady } from "./parser";
+import { enumerateCommands } from "./command-enumerator";
+import { evaluateCommand, aggregateResults } from "./evaluator";
 
 export interface CheckResult {
   state: "allow" | "deny";
@@ -27,23 +30,33 @@ export interface CheckResult {
   };
 }
 
-export function checkCommand(command: string): CheckResult {
+export async function checkCommand(command: string): Promise<CheckResult> {
   const config = loadConfig();
+  const allRules = [...config.deny, ...config.allow];
+  const cwd = process.cwd();
+
+  // Try parser-based evaluation first (handles chained commands correctly)
+  if (!isParserReady()) {
+    await initParser();
+  }
+  if (isParserReady()) {
+    const tree = parseBash(command);
+    if (tree) {
+      const commands = enumerateCommands(tree.rootNode);
+      const results = commands.map(cmd => evaluateCommand(cmd, allRules, cwd));
+      const result = aggregateResults(results, config.decision_strategy);
+      return {
+        state: result.state,
+        rule: result.rule ? { pattern: result.rule.pattern, regex: result.rule.regex, message: result.rule.message } : undefined,
+      };
+    }
+  }
+
+  // Fallback: simple pattern matching on full command (legacy)
   const normalized = normalizeCommand(command);
-  
-  // Get all text versions to try (original + normalized)
   const textsToTry = [command, normalized];
-  
-  // Combine all rules in order: deny, allow
-  // Last matching rule wins (like the extension)
-  const allRules: Array<{ state: "allow" | "deny"; pattern?: string; regex?: string; message?: string }> = [
-    ...config.deny.map(r => ({ ...r, state: "deny" as const })),
-    ...config.allow.map(r => ({ ...r, state: "allow" as const })),
-  ];
-  
-  // Find the last matching rule across all text versions
+
   let matchedRule: typeof allRules[number] | undefined;
-  
   for (const text of textsToTry) {
     for (const rule of allRules) {
       if (matchesRule(rule, text)) {
@@ -51,8 +64,8 @@ export function checkCommand(command: string): CheckResult {
       }
     }
   }
-  
-  return matchedRule ? { state: matchedRule.state, rule: matchedRule } : { state: "allow" };
+
+  return matchedRule ? { state: matchedRule.state ?? "allow", rule: matchedRule } : { state: "allow" };
 }
 
 function matchesRule(rule: { pattern?: string; regex?: string }, text: string): boolean {
@@ -90,7 +103,10 @@ async function main() {
     process.exit(1);
   }
   
-  const result = checkCommand(command);
+  // Initialize parser for chained command support
+  await initParser();
+  
+  const result = await checkCommand(command);
   console.log(result.state);
   
   switch (result.state) {
