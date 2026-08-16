@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "description": "Pi extension that reads fish shell abbreviations and expands them in user input.",
   "type": "module",
-  "main": "./pi-use-fish-shell-aliases-and-abbr.ts",
+  "main": "./index.ts",
   "exports": {
-    ".": "./pi-use-fish-shell-aliases-and-abbr.ts"
+    ".": "./index.ts"
   },
   "pi": {
     "extensions": [
-      "./pi-use-fish-shell-aliases-and-abbr.ts"
+      "./index.ts"
     ]
   },
   "keywords": [
