@@ -1,9 +1,7 @@
+import { expandCwd } from "./normalize";
+
 export function regexMatch(regexStr: string, text: string, cwd?: string): boolean {
-  let expandedRegex = regexStr;
-  if (cwd && regexStr.includes("$CWD")) {
-    const escapedCwd = cwd.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    expandedRegex = regexStr.replace(/\$CWD/g, escapedCwd);
-  }
+  const expandedRegex = expandCwd(regexStr, cwd);
 
   try {
     return new RegExp(expandedRegex, "i").test(text);

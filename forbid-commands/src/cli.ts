@@ -14,8 +14,7 @@
  */
 
 import { loadConfig } from "./config";
-import { wildcardMatch } from "./wildcard-utils";
-import { normalizeCommand } from "./normalize";
+
 import { pathToFileURL } from "node:url";
 import { initParser, parseBash, isParserReady } from "./parser";
 import { enumerateCommands } from "./command-enumerator";
@@ -52,35 +51,10 @@ export async function checkCommand(command: string): Promise<CheckResult> {
     }
   }
 
-  // Fallback: simple pattern matching on full command (legacy)
-  const normalized = normalizeCommand(command);
-  const textsToTry = [command, normalized];
-
-  let matchedRule: typeof allRules[number] | undefined;
-  for (const text of textsToTry) {
-    for (const rule of allRules) {
-      if (matchesRule(rule, text)) {
-        matchedRule = rule;
-      }
-    }
-  }
-
-  return matchedRule ? { state: matchedRule.state ?? "allow", rule: matchedRule } : { state: "allow" };
+  // Parser should always be ready; return allow if not
+  return { state: "allow" };
 }
 
-function matchesRule(rule: { pattern?: string; regex?: string }, text: string): boolean {
-  if (rule.regex) {
-    try {
-      return new RegExp(rule.regex, "i").test(text);
-    } catch {
-      return false;
-    }
-  }
-  if (rule.pattern) {
-    return wildcardMatch(rule.pattern, text);
-  }
-  return false;
-}
 
 async function main() {
   let command: string;

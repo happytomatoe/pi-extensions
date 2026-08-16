@@ -1,3 +1,16 @@
+const ESCAPE_RE = /[.*+?^${}()|[\]\\]/g;
+
+/** Escape string for use in RegExp */
+export function escapeRegExp(s: string): string {
+  return s.replace(ESCAPE_RE, "\\$&");
+}
+
+/** Expand $CWD placeholder in a pattern/regex string */
+export function expandCwd(str: string, cwd?: string): string {
+  if (!cwd || !str.includes("$CWD")) return str;
+  return str.replace(/\$CWD/g, escapeRegExp(cwd));
+}
+
 /**
  * Normalize command text to catch bypass variations
  */

@@ -1,13 +1,7 @@
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
+import { escapeRegExp, expandCwd } from "./normalize";
 
 export function wildcardMatch(pattern: string, text: string, cwd?: string): boolean {
-  let expanded = pattern;
-  if (cwd && pattern.includes("$CWD")) {
-    const escapedCwd = cwd.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    expanded = pattern.replace(/\$CWD/g, escapedCwd);
-  }
+  const expanded = expandCwd(pattern, cwd);
 
   let regexStr = expanded
     .split("*")

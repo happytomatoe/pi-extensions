@@ -76,8 +76,6 @@ export default function (pi: ExtensionAPI) {
     clearForkCache();
 
     // Detect fork if enabled
-
-    // Detect fork if enabled
     if (typedConfig.block_pr_create_for_fork_upstream?.enabled) {
       forkInfo = detectFork();
       if (forkInfo.isFork) {
