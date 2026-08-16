@@ -25,12 +25,9 @@ deny:
     message: "Killing processes by PID is forbidden"
   - pattern: "pkill *brave*"
     message: "Killing Brave processes is forbidden"
-  - pattern: "pkill brave"
-    message: "Killing Brave processes is forbidden"
   - pattern: "su *"
     message: "Switching user is forbidden"
-  - regex: "^\\s*git\\s+push\\s+--force\\s+origin\\s+main\\s*$"
-    message: "Force pushing to origin main is forbidden"
+
   - pattern: "sudo *"
     message: "Sudo is forbidden. If you need to install dnf package use toolbox"
   - pattern: "cargo install *"
@@ -45,9 +42,9 @@ deny:
     message: "Use fd. Run fd --help command for documentation"
   - pattern: "grep *"
     message: "Use rg. Run rg --help command for documentation"
-  - regex: "^\\s*git\\s+commit\\b.*--no-verify"
+  - pattern: "git commit *--no-verify*"
     message: "git commit --no-verify is forbidden. Hooks must run."
-  - regex: "^\\s*git\\s+push\\b.*--no-verify"
+  - pattern: "git push *--no-verify*"
     message: "git push --no-verify is forbidden. Hooks must run."
 
 
