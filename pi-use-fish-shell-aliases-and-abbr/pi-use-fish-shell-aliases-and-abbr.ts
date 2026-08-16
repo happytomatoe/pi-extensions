@@ -88,38 +88,7 @@ export default function (pi: ExtensionAPI) {
     }
   });
 
-  // Expand user input
-  pi.on("input", async (event, ctx) => {
-    // Skip extension-injected messages
-    if (event.source === "extension") {
-      return { action: "continue" };
-    }
-
-    // Skip if no abbreviations loaded
-    if (Object.keys(abbreviations).length === 0) {
-      return { action: "continue" };
-    }
-
-    // Skip whole-line bash commands (! prefix) - handled by user_bash event
-    if (event.text.trimStart().startsWith("!")) {
-      return { action: "continue" };
-    }
-
-    const expanded = expandText(event.text);
-
-    if (expanded !== event.text) {
-      // Show what was expanded
-      ctx.ui.notify(
-        `Expanded: ${event.text.slice(0, 40)}${event.text.length > 40 ? "..." : ""} → ${expanded.slice(0, 40)}${expanded.length > 40 ? "..." : ""}`,
-        "info",
-      );
-      return { action: "transform", text: expanded, images: event.images };
-    }
-
-    return { action: "continue" };
-  });
-
-  // Expand abbreviations in ! and !! bash commands
+  // Aliases only expanded in ! and !! bash commands (via user_bash).
   pi.on("user_bash", async (event, ctx) => {
     if (Object.keys(abbreviations).length === 0) return;
 
