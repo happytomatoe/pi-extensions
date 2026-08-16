@@ -60,6 +60,14 @@ install:
     fi
 
     cd {{REPO_DIR}}/$chosen && npm install
+
+    # Create symlink for forbid-commands config
+    if [ "$chosen" = "forbid-commands" ]; then
+        mkdir -p ~/.pi/agent
+        ln -sf "{{ REPO_DIR }}/forbid-commands/forbid-commands.yaml" ~/.pi/agent/forbid-commands.yaml
+        echo "✓ Symlinked forbid-commands.yaml to ~/.pi/agent/"
+    fi
+
     echo "Run 'pi config' to enable/disable individual extensions."
 # Interactive multi-select picker (gum) → pi install each
 install-multiple:
@@ -109,8 +117,12 @@ install-multiple:
     echo "Done. Installed $installed extension(s)."
     echo "Run 'pi config' to enable/disable individual extensions."
 
-    # offer to setup DCG allowlist if forbid-commands was installed
+    # Create symlink for forbid-commands config and offer DCG setup
     if echo "$chosen" | grep -q "forbid-commands"; then
+        mkdir -p ~/.pi/agent
+        ln -sf "{{ REPO_DIR }}/forbid-commands/forbid-commands.yaml" ~/.pi/agent/forbid-commands.yaml
+        echo "✓ Symlinked forbid-commands.yaml to ~/.pi/agent/"
+
         echo ""
         if gum confirm "Set up DCG allowlist for project work? (allows rm/mv in ./ and /tmp/)"; then
             just setup-allowlist
@@ -148,6 +160,13 @@ install-all:
         pi install "$d" 2>&1 && count=$((count + 1))
     done
     echo "Done. Installed $count extension(s)."
+
+    # Create symlink for forbid-commands config
+    if [ -d "{{ REPO_DIR }}/forbid-commands" ]; then
+        mkdir -p ~/.pi/agent
+        ln -sf "{{ REPO_DIR }}/forbid-commands/forbid-commands.yaml" ~/.pi/agent/forbid-commands.yaml
+        echo "✓ Symlinked forbid-commands.yaml to ~/.pi/agent/"
+    fi
 
 # Configure DCG allowlist for project work
 # Allows: rm/mv in current dir, rm -rf /tmp/*, git operations

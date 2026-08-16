@@ -1,106 +1,69 @@
 # forbid-commands
 
-A [Pi](https://github.com/happytomatoe/pi) extension that blocks, confirms, or allows shell commands via a YAML config.
-
-## Three Modes
-
-| Mode | Behavior |
-|------|----------|
-| **deny** | Hard block — never runs, no questions |
-| **confirm** | Asks user before running |
-| **allow** | Runs silently, skips DCG too |
+A [Pi](https://github.com/happytomatoe/pi) extension that blocks shell commands via YAML config + optional DCG fallback.
 
 ## How it works
 
-1. Check **deny** rules → block immediately
-2. Check **allow** rules → run silently
-3. Check **confirm** rules → ask user
-4. Fallback to **DCG** (if installed and enabled)
-5. Default: allow
+1. Match **deny** rules → block
+2. Match **allow** rules → skip DCG
+3. Fallback to **DCG** (if enabled)
+4. Default: allow
 
-Last matching rule wins (like shell PATH).
+## Config
 
-## Config File
-
-Place at one of:
+Place at:
 - **Global:** `~/.pi/agent/forbid-commands.yaml`
 - **Project:** `.pi/forbid-commands.yaml`
 
-Project-local overrides global.
-
-### Example Config
-
 ```yaml
 use_dcg: true
+decision_strategy: most-restrictive  # or: last-match, first-match
 
-# HARD BLOCK
 deny:
-  - pattern: "shutdown *"
-    message: "Shutdown is forbidden"
-  - pattern: "kill *"
-    message: "Killing processes is forbidden"
-
-# ASK USER
-confirm:
-  - pattern: "rm *"
-    message: "Allow rm?"
   - pattern: "sudo *"
-    message: "Allow sudo?"
-  - pattern: "git push *"
-    message: "Allow git push?"
+    message: "Sudo is forbidden"
+  - regex: "^\\s*git\\s+push\\s+--force"
+    message: "Force push is forbidden"
 
-# ALLOW SILENTLY
 allow:
   - pattern: "ls *"
-  - pattern: "cat *"
   - pattern: "git status"
-  - pattern: "git diff *"
-  - pattern: "mkdir *"
-  - pattern: "cp *"
-  - pattern: "mv *"
+  - pattern: "rm /tmp/*"
 ```
 
-### Pattern Syntax
+## Pattern Syntax
 
 - `*` matches anything (glob-style)
-- `rm *` matches `rm foo`, `rm -rf ./bar`, etc.
-- `git push *` matches `git push`, `git push origin main`
-- Exact match: `git status` (no wildcard)
-### Allowing `rm` in Project Directories
+- Supports `$CWD` expansion for current directory
+- `regex` field for regex patterns
 
-The extension now detects the shell's current directory via `$PWD`, allowing patterns like `$CWD` to work correctly:
+## Fork Protection
+
+Blocks `gh pr create` targeting upstream when working on forks:
 
 ```yaml
-allow:
-  # Allow rm in current directory (uses shell cwd)
-  - pattern: "rm $CWD/*"
-  - pattern: "rm -rf $CWD/*"
+block_pr_create_for_fork_upstream:
+  enabled: true
+  exempt_repos: []
 ```
 
-**How it works:**
-- The extension runs `echo $PWD` before evaluating commands
-- This gets the shell's current directory (after any `cd` commands)
-- `$CWD` in patterns is replaced with this directory
-- Works for both absolute and relative paths in the current directory
+## CLI
 
-**Example:** If you're in `/var/home/l/git/voice-to-text` and run:
 ```bash
-rm /var/home/l/git/voice-to-text/.agents/skills/e2e-setup/SKILL.md
+just check "echo hello"    # → allow
+just check "sudo ls"       # → deny
 ```
-The pattern `rm $CWD/*` will match and allow it without confirmation.
-### Options
-
-| Key | Default | Description |
-|-----|---------|-------------|
-| `use_dcg` | `true` | Enable DCG as fallback for unmatched commands |
 
 ## Install
 
+From the parent `pi-extensions` repo:
+
 ```bash
-pi install git:github.com/happytomatoe/pi-extensions
+just install    # interactive picker
+just install-all   # install all extensions
 ```
 
-Then run `pi config` to enable the extension.
+This symlinks the config to `~/.pi/agent/forbid-commands.yaml` automatically.
 
 ## License
 
