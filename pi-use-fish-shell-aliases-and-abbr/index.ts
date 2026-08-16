@@ -110,40 +110,4 @@ export default function (pi: ExtensionAPI) {
       },
     };
   });
-
-  // /abbr command to list abbreviations
-  pi.registerCommand("abbr", {
-    description: "List fish shell abbreviations",
-    handler: async (args, ctx) => {
-      const entries = Object.entries(abbreviations);
-
-      if (entries.length === 0) {
-        ctx.ui.notify("No abbreviations loaded", "warning");
-        return;
-      }
-
-      // Filter by prefix if argument provided
-      const filter = args.trim().toLowerCase();
-      const filtered = filter
-        ? entries.filter(
-            ([key, value]) =>
-              key.toLowerCase().includes(filter) ||
-              value.toLowerCase().includes(filter),
-          )
-        : entries;
-
-      if (filtered.length === 0) {
-        ctx.ui.notify(
-          `No abbreviations matching "${filter}" (${entries.length} total)`,
-          "warning",
-        );
-        return;
-      }
-
-      // Print to output
-      const lines = filtered.map(([key, value]) => `  ${key} → ${value}`);
-      const header = `Fish abbreviations${filter ? ` matching "${filter}"` : ""} (${filtered.length}/${entries.length}):\n`;
-      console.log(header + lines.join("\n"));
-    },
-  });
 }
