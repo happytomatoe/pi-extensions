@@ -38,13 +38,25 @@ deny:
     message: "Use fd. Run fd --help command for documentation"
   - pattern: "grep *"
     message: "Use rg. Run rg --help command for documentation"
-  # --no-verify detection is handled by tokenizer in evaluator.ts
-
-
-
-
-
-
+  - pattern: "git push --force *"
+    message: "Force push is forbidden. Use git revert instead."
+  - pattern: "git reset --hard *"
+    message: "Hard reset is forbidden. Use git revert instead."
+  # Block --no-verify for git commands that have hooks
+  - pattern: "git commit *--no-verify*"
+    message: "git commit --no-verify is forbidden. Hooks must run."
+  - pattern: "git commit *-n"
+    message: "git commit -n is forbidden. Hooks must run."
+  - pattern: "git push *--no-verify*"
+    message: "git push --no-verify is forbidden. Hooks must run."
+  - pattern: "git merge *--no-verify*"
+    message: "git merge --no-verify is forbidden. Hooks must run."
+  - pattern: "git cherry-pick *--no-verify*"
+    message: "git cherry-pick --no-verify is forbidden. Hooks must run."
+  - pattern: "git rebase *--no-verify*"
+    message: "git rebase --no-verify is forbidden. Hooks must run."
+  - pattern: "git am *--no-verify*"
+    message: "git am --no-verify is forbidden. Hooks must run."
 # ALLOW — skip DCG too
 allow:
   # Read-only
