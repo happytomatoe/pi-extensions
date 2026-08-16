@@ -7,12 +7,13 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 
 function resolveWasmPath(): string {
-  const localPath = join(__dirname, "../grammars/tree-sitter-bash.wasm");
+  const currentDir = dirname(fileURLToPath(import.meta.url));
+  const localPath = join(currentDir, "../grammars/tree-sitter-bash.wasm");
   if (existsSync(localPath)) {
     return localPath;
   }
 
-  const nmPath = join(__dirname, "../node_modules/tree-sitter-bash/tree-sitter-bash.wasm");
+  const nmPath = join(currentDir, "../node_modules/tree-sitter-bash/tree-sitter-bash.wasm");
   if (existsSync(nmPath)) {
     return nmPath;
   }

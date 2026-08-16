@@ -49,6 +49,8 @@ deny:
     message: "rm is forbidden outside the current directory or /tmp"
   - pattern: "git push --force *"
     message: "Force push is forbidden"
+  - pattern: "git push --no-verify *"
+    message: "Push with --no-verify is forbidden"
   - pattern: "git reset --hard *"
     message: "Hard reset is forbidden"
   - regex: 'literal\\\\dot'
@@ -182,12 +184,15 @@ allow:
     ["cargo install ripgrep", "deny"],
     ["cargo install bat", "deny"],
     ["cargo install fd-find", "deny"],
+    // Chained commands - bypass test
+    ["echo hello && git push --no-verify origin main", "deny"],
+    ["cd /tmp && git add . && git commit -m 'test' && git push --no-verify", "deny"],
   ];
 
   describe("table-driven tests", () => {
     testCases.forEach(([command, expected]) => {
-      it(`"${command}" → ${expected}`, () => {
-        const result = checkCommand(command);
+      it(`"${command}" → ${expected}`, async () => {
+        const result = await checkCommand(command);
         expect(result.state).toBe(expected);
       });
     });

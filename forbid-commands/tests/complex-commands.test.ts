@@ -1,46 +1,42 @@
 import { describe, it, expect } from "vitest";
 import { checkCommand } from "../src/cli";
 
-describe("Complex command variations (CLI simple check)", () => {
-  // The CLI tool does simple pattern matching on the raw command string.
-  // It does NOT parse pipes, command substitution, env vars, etc.
-  // The extension uses tree-sitter for proper parsing.
-  // 
-  // With "last matching rule wins":
-  // - deny rules come first in allRules
-  // - confirm rules come second
-  // - allow rules come last
-  // So if a command matches both deny and allow, allow wins.
+describe("Complex command variations (CLI with parser)", () => {
+  // The CLI now uses tree-sitter parser to properly parse commands.
+  // Pipes, command substitution, env vars, and command chains are all parsed.
+  // Each individual command is checked against rules.
+  // With "most-restrictive" strategy: if ANY command is denied, the whole thing is denied.
+
   const testCases: Array<[string, "allow" | "deny"]> = [
-    // Pipe commands - CLI matches against full string
-    // "echo *" matches, so allow wins
-    ["echo test | sudo ls", "allow"],
-    ["echo test | kill 1234", "allow"],
-    
-    // Command substitution - no pattern matches
-    ["$(sudo ls)", "allow"],  // No pattern matches, defaults to allow
-    ["`sudo ls`", "allow"],  // No pattern matches, defaults to allow
-    
-    // Env vars - pattern "sudo *" doesn't match "SUDO_ASKPASS=x sudo ls"
-    ["SUDO_ASKPASS=x sudo ls", "allow"],  // No pattern matches, defaults to allow
-    ["EDITOR=vim sudo -e /tmp/test", "allow"],  // No pattern matches, defaults to allow
-    
-    // Multiple commands - "rm /tmp/*" matches, so allow wins
-    ["rm /tmp/a; sudo ls", "allow"],
-    ["rm /tmp/a && sudo ls", "allow"],
-    ["rm /tmp/a || sudo ls", "allow"],
-    
-    // Allowed commands in pipes
-    ["echo test | grep foo", "allow"],
-    ["ls /tmp | grep foo", "allow"],
-    
+    // Pipe commands - each command in the pipe is checked
+    // "echo *" matches, "sudo *" also matches → deny wins (most-restrictive)
+    ["echo test | sudo ls", "deny"],
+    ["echo test | kill 1234", "deny"],
+
+    // Command substitution - the inner command is parsed
+    ["$(sudo ls)", "deny"],  // sudo is denied
+    ["`sudo ls`", "deny"],  // sudo is denied
+
+    // Env vars - env vars are stripped, "sudo *" matches
+    ["SUDO_ASKPASS=x sudo ls", "deny"],
+    ["EDITOR=vim sudo -e /tmp/test", "deny"],
+
+    // Multiple commands - "sudo *" in second command is denied
+    ["rm /tmp/a; sudo ls", "deny"],
+    ["rm /tmp/a && sudo ls", "deny"],
+    ["rm /tmp/a || sudo ls", "deny"],
+
+    // Allowed commands in pipes - all commands are allowed
+    ["echo test | cat /tmp/file", "allow"],
+    ["ls /tmp | cat /tmp/file", "allow"],
+
     // Allowed commands with pipes
     ["cat /tmp/file | head -5", "allow"],
   ];
 
   testCases.forEach(([command, expected]) => {
-    it(`"${command}" → ${expected}`, () => {
-      const result = checkCommand(command);
+    it(`"${command}" → ${expected}`, async () => {
+      const result = await checkCommand(command);
       expect(result.state).toBe(expected);
     });
   });
