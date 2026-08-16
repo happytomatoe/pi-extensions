@@ -2,7 +2,7 @@ import type { BashCommand } from "./command-enumerator";
 import type { PatternRule, EvaluationResult, DecisionStrategy } from "./types";
 import { regexMatch } from "./regex-utils";
 import { wildcardMatch } from "./wildcard-utils";
-import { getMatchingTexts } from "./normalize";
+import { getMatchingTexts, hasNoVerifyFlag, detectGitBypassFlags } from "./normalize";
 
 function matchesRule(rule: PatternRule, text: string, cwd?: string): boolean {
   if (rule.regex) {
@@ -12,6 +12,44 @@ function matchesRule(rule: PatternRule, text: string, cwd?: string): boolean {
     return wildcardMatch(rule.pattern, text, cwd);
   }
   return false;
+}
+
+/**
+ * Check for dangerous git flags using tokenizer
+ * This catches bypass attempts that wildcard patterns might miss
+ */
+function checkGitBypassFlags(text: string): { denied: boolean; message?: string } {
+  // Only check git commands
+  const trimmed = text.trim();
+  if (!trimmed.startsWith('git ')) {
+    return { denied: false };
+  }
+
+  const flags = detectGitBypassFlags(trimmed);
+  
+  if (flags.includes('--no-verify')) {
+    // Determine which git command
+    const args = trimmed.split(/\s+/);
+    const subcommand = args[1];
+    
+    // Only block --no-verify for commands that have hooks
+    const hookCommands = ['commit', 'push', 'merge', 'cherry-pick', 'rebase', 'am'];
+    if (hookCommands.includes(subcommand)) {
+      return {
+        denied: true,
+        message: `git ${subcommand} --no-verify is forbidden. Hooks must run.`,
+      };
+    }
+  }
+  
+  if (flags.includes('--force') || flags.includes('--force-with-lease')) {
+    return {
+      denied: true,
+      message: "Force push is forbidden. Use git revert instead.",
+    };
+  }
+  
+  return { denied: false };
 }
 
 function matchRulesLastWins(rules: PatternRule[], text: string, cwd?: string): PatternRule | undefined {
@@ -29,6 +67,21 @@ export function evaluateCommand(
   rules: PatternRule[],
   cwd?: string
 ): EvaluationResult {
+  // First, check for dangerous git flags using tokenizer
+  const gitBypass = checkGitBypassFlags(command.text);
+  if (gitBypass.denied) {
+    return {
+      command: command.text,
+      state: "deny",
+      rule: {
+        pattern: command.text,
+        state: "deny",
+        message: gitBypass.message,
+      },
+      context: command.context,
+      wrapperKind: command.wrapperKind,
+    };
+  }
   if (command.wrapperKind) {
     // Try matching against all text versions (original and normalized)
     const textsToTry = getMatchingTexts(command.text);

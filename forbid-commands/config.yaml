@@ -1,0 +1,3 @@
+deny:
+  - regex: "^\\s*git\\s+push\\b.*--no-verify"
+    message: "git push --no-verify is forbidden. Hooks must run."

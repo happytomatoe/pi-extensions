@@ -1,5 +1,5 @@
+import { tokenizeArgs } from 'args-tokenizer';
 const ESCAPE_RE = /[.*+?^${}()|[\]\\]/g;
-
 /** Escape string for use in RegExp */
 export function escapeRegExp(s: string): string {
   return s.replace(ESCAPE_RE, "\\$&");
@@ -11,6 +11,40 @@ export function expandCwd(str: string, cwd?: string): string {
   return str.replace(/\$CWD/g, escapeRegExp(cwd));
 }
 
+/**
+ * Parse command into tokens using args-tokenizer
+ */
+export function parseCommand(text: string): string[] {
+  try {
+    return tokenizeArgs(text);
+  } catch {
+    return text.split(/\s+/);
+  }
+}
+
+/**
+ * Detect --no-verify flag in git commands
+ */
+export function hasNoVerifyFlag(text: string): boolean {
+  const args = parseCommand(text);
+  return args.some(arg => arg === '--no-verify' || arg === '-n');
+}
+
+/**
+ * Detect git-specific bypass flags
+ */
+export function detectGitBypassFlags(text: string): string[] {
+  const args = parseCommand(text);
+  const flags: string[] = [];
+  
+  for (const arg of args) {
+    if (arg === '--no-verify' || arg === '-n') flags.push('--no-verify');
+    if (arg === '--force' || arg === '-f') flags.push('--force');
+    if (arg === '--force-with-lease') flags.push('--force-with-lease');
+  }
+  
+  return [...new Set(flags)];
+}
 /**
  * Normalize command text to catch bypass variations
  */

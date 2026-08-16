@@ -34,18 +34,11 @@ deny:
     message: "Use cargo binstall. How to use - cargo binstall <package-name>"
   - pattern: "rm *"
     message: "rm is forbidden. Use 'rm ./file.txt' for current directory or 'rm /tmp/file.txt' for /tmp only"
-  - pattern: "git push --force *"
-    message: "Force push is forbidden. Use git revert instead."
-  - pattern: "git reset --hard *"
-    message: "Hard reset is forbidden. Use git revert instead."
   - pattern: "find *"
     message: "Use fd. Run fd --help command for documentation"
   - pattern: "grep *"
     message: "Use rg. Run rg --help command for documentation"
-  - pattern: "git commit *--no-verify*"
-    message: "git commit --no-verify is forbidden. Hooks must run."
-  - pattern: "git push *--no-verify*"
-    message: "git push --no-verify is forbidden. Hooks must run."
+  # --no-verify detection is handled by tokenizer in evaluator.ts
 
 
 
