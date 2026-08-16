@@ -1,8 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
-import type { PatternRule, PermissionState, DecisionStrategy, Config, BlockPrCreateForForkUpstreamConfig } from "./types";
+import type { PatternRule, PermissionState, DecisionStrategy, Config, BlockPrCreateForForkUpstreamConfig, CommandPattern } from "./types";
 
+import { parseCommandString } from "./command-parser";
 function unescapeYamlDoubleQuoted(s: string): string {
   return s.replace(/\\("|\\)/g, "$1");
 }
@@ -97,7 +98,10 @@ function parseSimpleYaml(raw: string): Record<string, unknown> {
 function normalizeRawRule(raw: Record<string, string | undefined>, state: PermissionState): PatternRule {
   const rule: PatternRule = { state };
   if (raw.regex) rule.regex = raw.regex;
-  if (raw.pattern) rule.pattern = raw.pattern;
+  if (raw.pattern) {
+    rule.pattern = raw.pattern;
+    rule.parsed = parseCommandString(raw.pattern);
+  }
   if (raw.message) rule.message = raw.message;
   return rule;
 }
