@@ -1,24 +1,6 @@
 /**
  * Normalize command text to catch bypass variations
  */
-
-// Known binaries that should be normalized from full paths
-const KNOWN_BINARIES = [
-  'rm', 'cat', 'ls', 'grep', 'find', 'kill', 'pkill', 'sudo', 'env',
-  'chmod', 'chown', 'cp', 'mv', 'mkdir', 'rmdir', 'touch', 'ln',
-  'head', 'tail', 'wc', 'sort', 'uniq', 'cut', 'awk', 'sed',
-  'curl', 'wget', 'ssh', 'scp', 'sftp', 'rsync',
-  'docker', 'kubectl', 'terraform', 'ansible',
-  'node', 'npm', 'yarn', 'pnpm', 'bun',
-  'python', 'python3', 'pip', 'pip3',
-  'cargo', 'rustc', 'go',
-  'git',
-  'java', 'javac',
-];
-
-/**
- * Normalize command text to catch bypass variations
- */
 export function normalizeCommand(text: string): string {
   let normalized = text;
   
@@ -33,11 +15,9 @@ export function normalizeCommand(text: string): string {
     return word;
   });
   
-  // 2. Normalize paths: /bin/rm → rm, /usr/bin/rm → rm
-  for (const binary of KNOWN_BINARIES) {
-    const pathRegex = new RegExp(`(?:/[\\w.-]+)+/${binary}\\b`, 'g');
-    normalized = normalized.replace(pathRegex, binary);
-  }
+  // 2. Normalize any full path to just the binary name (first token only)
+  // /usr/bin/rm → rm, /usr/local/bin/git → git
+  normalized = normalized.replace(/^(?:\/[\w.-]+)+\/(\w+)/, '$1');
   
   // 3. Remove backslashes: \rm → rm
   normalized = normalized.replace(/\\(\w)/g, '$1');
