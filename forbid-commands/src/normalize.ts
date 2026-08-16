@@ -12,6 +12,7 @@ const KNOWN_BINARIES = [
   'node', 'npm', 'yarn', 'pnpm', 'bun',
   'python', 'python3', 'pip', 'pip3',
   'cargo', 'rustc', 'go',
+  'git',
   'java', 'javac',
 ];
 
