@@ -43,6 +43,7 @@ deny:
   - pattern: "git reset --hard *"
     message: "Hard reset is forbidden. Use git revert instead."
   # Block --no-verify for git commands that have hooks
+  # Wildcard patterns for simple cases
   - pattern: "git commit *--no-verify*"
     message: "git commit --no-verify is forbidden. Hooks must run."
   - pattern: "git commit *-n"
@@ -56,6 +57,20 @@ deny:
   - pattern: "git rebase *--no-verify*"
     message: "git rebase --no-verify is forbidden. Hooks must run."
   - pattern: "git am *--no-verify*"
+    message: "git am --no-verify is forbidden. Hooks must run."
+  # Regex patterns to catch bypass attempts (e.g., git -c core.hooksPath=/dev/null push --no-verify)
+  # Regex patterns to catch bypass attempts (e.g., git -c core.hooksPath=/dev/null push --no-verify)
+  - regex: "^git\s+(-\S+(\s+[^-]\S*)?\s+)*commit\b.*--no-verify"
+    message: "git commit --no-verify is forbidden. Hooks must run."
+  - regex: "^git\s+(-\S+(\s+[^-]\S*)?\s+)*push\b.*--no-verify"
+    message: "git push --no-verify is forbidden. Hooks must run."
+  - regex: "^git\s+(-\S+(\s+[^-]\S*)?\s+)*merge\b.*--no-verify"
+    message: "git merge --no-verify is forbidden. Hooks must run."
+  - regex: "^git\s+(-\S+(\s+[^-]\S*)?\s+)*cherry-pick\b.*--no-verify"
+    message: "git cherry-pick --no-verify is forbidden. Hooks must run."
+  - regex: "^git\s+(-\S+(\s+[^-]\S*)?\s+)*rebase\b.*--no-verify"
+    message: "git rebase --no-verify is forbidden. Hooks must run."
+  - regex: "^git\s+(-\S+(\s+[^-]\S*)?\s+)*am\b.*--no-verify"
     message: "git am --no-verify is forbidden. Hooks must run."
 # ALLOW — skip DCG too
 allow:
