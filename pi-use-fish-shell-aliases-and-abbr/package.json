@@ -1,0 +1,29 @@
+{
+  "name": "pi-use-fish-shell-aliases-and-abbr",
+  "version": "0.1.0",
+  "description": "Pi extension that reads fish shell abbreviations and expands them in user input.",
+  "type": "module",
+  "main": "./pi-use-fish-shell-aliases-and-abbr.ts",
+  "exports": {
+    ".": "./pi-use-fish-shell-aliases-and-abbr.ts"
+  },
+  "pi": {
+    "extensions": [
+      "./pi-use-fish-shell-aliases-and-abbr.ts"
+    ]
+  },
+  "keywords": [
+    "pi",
+    "pi-extension",
+    "pi-coding-agent",
+    "fish",
+    "shell",
+    "abbreviations",
+    "aliases"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.80.0"
+  }
+}
