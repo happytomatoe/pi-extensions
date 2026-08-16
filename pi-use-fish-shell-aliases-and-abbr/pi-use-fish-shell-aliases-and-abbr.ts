@@ -100,6 +100,7 @@ export default function (pi: ExtensionAPI) {
       "info",
     );
 
+    // Wrap built-in bash to execute the expanded command
     const local = createLocalBashOperations();
     return {
       operations: {
@@ -109,8 +110,6 @@ export default function (pi: ExtensionAPI) {
       },
     };
   });
-
-
 
   // /abbr command to list abbreviations
   pi.registerCommand("abbr", {
