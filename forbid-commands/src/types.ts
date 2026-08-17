@@ -1,8 +1,23 @@
 export type PermissionState = "allow" | "deny";
 export type DecisionStrategy = "most-restrictive" | "last-match" | "first-match";
 
+/**
+ * Structured command representation for pattern matching
+ */
+export interface CommandPattern {
+  command: string;        // e.g., "git", "rm", "kill"
+  subcommand?: string;    // e.g., "push", "commit"
+  flags: string[];        // e.g., ["--no-verify", "-f"]
+  flagArgs: string[];     // args after flags
+  raw: string;            // original command string
+}
+
 export interface PatternRule {
   regex?: string;
+  pattern?: string;
+  message?: string;
+  state: PermissionState;
+  parsed?: CommandPattern;  // structured representation of pattern
   pattern?: string;
   message?: string;
   state: PermissionState;

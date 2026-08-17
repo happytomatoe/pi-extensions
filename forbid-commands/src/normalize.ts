@@ -1,20 +1,50 @@
+import { tokenizeArgs } from 'args-tokenizer';
+const ESCAPE_RE = /[.*+?^${}()|[\]\\]/g;
+/** Escape string for use in RegExp */
+export function escapeRegExp(s: string): string {
+  return s.replace(ESCAPE_RE, "\\$&");
+}
+
+/** Expand $CWD placeholder in a pattern/regex string */
+export function expandCwd(str: string, cwd?: string): string {
+  if (!cwd || !str.includes("$CWD")) return str;
+  return str.replace(/\$CWD/g, escapeRegExp(cwd));
+}
+
 /**
- * Normalize command text to catch bypass variations
+ * Parse command into tokens using args-tokenizer
  */
+export function parseCommand(text: string): string[] {
+  try {
+    return tokenizeArgs(text);
+  } catch {
+    return text.split(/\s+/);
+  }
+}
 
-// Known binaries that should be normalized from full paths
-const KNOWN_BINARIES = [
-  'rm', 'cat', 'ls', 'grep', 'find', 'kill', 'pkill', 'sudo', 'env',
-  'chmod', 'chown', 'cp', 'mv', 'mkdir', 'rmdir', 'touch', 'ln',
-  'head', 'tail', 'wc', 'sort', 'uniq', 'cut', 'awk', 'sed',
-  'curl', 'wget', 'ssh', 'scp', 'sftp', 'rsync',
-  'docker', 'kubectl', 'terraform', 'ansible',
-  'node', 'npm', 'yarn', 'pnpm', 'bun',
-  'python', 'python3', 'pip', 'pip3',
-  'cargo', 'rustc', 'go',
-  'java', 'javac',
-];
+/**
+ * Detect --no-verify flag in git commands
+ */
+export function hasNoVerifyFlag(text: string): boolean {
+  const args = parseCommand(text);
+  return args.some(arg => arg === '--no-verify' || arg === '-n');
+}
 
+/**
+ * Detect git-specific bypass flags
+ */
+export function detectGitBypassFlags(text: string): string[] {
+  const args = parseCommand(text);
+  const flags: string[] = [];
+  
+  for (const arg of args) {
+    if (arg === '--no-verify' || arg === '-n') flags.push('--no-verify');
+    if (arg === '--force' || arg === '-f') flags.push('--force');
+    if (arg === '--force-with-lease') flags.push('--force-with-lease');
+  }
+  
+  return [...new Set(flags)];
+}
 /**
  * Normalize command text to catch bypass variations
  */
@@ -32,11 +62,9 @@ export function normalizeCommand(text: string): string {
     return word;
   });
   
-  // 2. Normalize paths: /bin/rm → rm, /usr/bin/rm → rm
-  for (const binary of KNOWN_BINARIES) {
-    const pathRegex = new RegExp(`(?:/[\\w.-]+)+/${binary}\\b`, 'g');
-    normalized = normalized.replace(pathRegex, binary);
-  }
+  // 2. Normalize any full path to just the binary name (first token only)
+  // /usr/bin/rm → rm, /usr/local/bin/git → git
+  normalized = normalized.replace(/^(?:\/[\w.-]+)+\/(\w+)/, '$1');
   
   // 3. Remove backslashes: \rm → rm
   normalized = normalized.replace(/\\(\w)/g, '$1');

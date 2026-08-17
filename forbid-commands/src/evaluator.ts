@@ -1,10 +1,22 @@
 import type { BashCommand } from "./command-enumerator";
-import type { PatternRule, EvaluationResult, DecisionStrategy } from "./types";
+import type { PatternRule, EvaluationResult, DecisionStrategy, CommandPattern } from "./types";
 import { regexMatch } from "./regex-utils";
 import { wildcardMatch } from "./wildcard-utils";
 import { getMatchingTexts } from "./normalize";
+import { parseCommandString, patternMatches } from "./command-parser";
 
 function matchesRule(rule: PatternRule, text: string, cwd?: string): boolean {
+  // Try structured matching first if rule has parsed pattern
+  // Skip structured matching for patterns with wildcards (they need regex)
+  if (rule.parsed && !rule.pattern?.includes('*')) {
+    const actual = parseCommandString(text);
+    if (patternMatches(rule.parsed, actual)) {
+      return true;
+    }
+    // If structured matching was attempted but failed, fall through to regex/wildcard
+  }
+  
+  // Fall back to regex/wildcard
   if (rule.regex) {
     return regexMatch(rule.regex, text, cwd);
   }
@@ -13,6 +25,7 @@ function matchesRule(rule: PatternRule, text: string, cwd?: string): boolean {
   }
   return false;
 }
+
 
 function matchRulesLastWins(rules: PatternRule[], text: string, cwd?: string): PatternRule | undefined {
   let matched: PatternRule | undefined;
