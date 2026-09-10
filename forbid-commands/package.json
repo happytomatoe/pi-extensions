@@ -40,7 +40,7 @@
     "web-tree-sitter": "^0.26.11"
   },
   "devDependencies": {
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "optionalDependencies": {
     "tree-sitter-bash": "^0.25.1"
